@@ -1,5 +1,19 @@
 import { Expose, Type } from 'class-transformer';
-import { UserResponseDto } from 'src/user/dto/response-user.dto';
+import { UserRole } from 'src/user/user.entities';
+
+export class AgencyUserSummaryDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  firstName: string;
+
+  @Expose()
+  lastName: string;
+
+  @Expose()
+  role: UserRole;
+}
 
 export class AgencyResponseDto {
   @Expose()
@@ -30,6 +44,6 @@ export class AgencyResponseDto {
   isActive: boolean;
 
   @Expose()
-  @Type(() => UserResponseDto)
-  users?: UserResponseDto[];
+  @Type(() => AgencyUserSummaryDto)
+  users?: AgencyUserSummaryDto[];
 }
