@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AgencyModule } from './agency/agency.module';
+import { User } from './user/user.entities';
+import { Agency } from './agency/agency.entities';
+import { SeedModule } from './seeder/seeder.module';
 
 @Module({
   imports: [
@@ -10,13 +13,14 @@ import { AgencyModule } from './agency/agency.module';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      database: 'goodlife_insurance_db',
-      entities: [],
-      synchronize: true, // ⚠️ disable in prod
+      database: 'crm_insurance_project_db',
+      entities: [User, Agency],
+      synchronize: true,
       logging: false,
     }),
     UserModule,
     AgencyModule,
+    SeedModule,
   ],
   controllers: [],
   providers: [],
