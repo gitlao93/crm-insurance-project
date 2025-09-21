@@ -1,6 +1,20 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import { UserRole } from '../user.entities';
 import { Agency } from 'src/agency/agency.entities';
+
+export class SupervisorSummaryDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  firstName: string;
+
+  @Expose()
+  lastName: string;
+
+  @Expose()
+  role: UserRole;
+}
 
 export class UserResponseDto {
   @Expose()
@@ -37,20 +51,15 @@ export class UserResponseDto {
   agencyId: number;
 
   @Expose()
-  @Type(() => Agency) // will serialize using Agency entity class
+  @Type(() => Agency)
   agency: Agency;
 
   @Expose()
   supervisorId?: number;
 
   @Expose()
-  @Transform(
-    ({ value }: { value: { firstName: string; lastName: string } | null }) => {
-      if (!value) return null;
-      return `${value.firstName} ${value.lastName}`;
-    },
-  )
-  supervisorName?: string;
+  @Type(() => SupervisorSummaryDto)
+  supervisorName?: SupervisorSummaryDto;
 
   @Expose()
   createdAt: Date;

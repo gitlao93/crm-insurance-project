@@ -14,14 +14,14 @@ import { UserRole } from '../user.entities';
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[A-Za-z]+(-[A-Za-z]+)*$/, {
+  @Matches(/^[A-Za-z]+([ -][A-Za-z]+)*$/, {
     message: 'firstName can only contain letters and an optional hyphen',
   })
   firstName: string;
 
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[A-Za-z]+(-[A-Za-z]+)*$/, {
+  @Matches(/^[A-Za-z]+([ -][A-Za-z]+)*$/, {
     message: 'lastName can only contain letters and an optional hyphen',
   })
   lastName: string;
@@ -30,6 +30,7 @@ export class CreateUserDto {
   email: string;
 
   @IsString()
+  @IsOptional()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
   password: string;
 

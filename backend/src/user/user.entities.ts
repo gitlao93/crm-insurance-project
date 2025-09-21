@@ -5,8 +5,10 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  BeforeInsert,
 } from 'typeorm';
 import { Agency } from 'src/agency/agency.entities';
+import * as bcrypt from 'bcrypt';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -31,6 +33,14 @@ export class User {
 
   @Column({ type: 'varchar', length: 255 })
   password: string;
+
+  @BeforeInsert()
+  async setDefaultPassword() {
+    if (!this.password) {
+      this.password = 'password123';
+    }
+    this.password = await bcrypt.hash(this.password, 10);
+  }
 
   @Column({ type: 'varchar', length: 20 })
   phoneNumber: string;
@@ -59,12 +69,12 @@ export class User {
   @Column({ type: 'int', name: 'agency_id' })
   agencyId: number;
 
+  @Column({ type: 'int', name: 'supervisor_id', nullable: true })
+  supervisorId: number | null;
+
   @ManyToOne(() => User, (user) => user.subordinates, { nullable: true })
   @JoinColumn({ name: 'supervisor_id' })
   supervisor: User | null;
-
-  @Column({ type: 'int', name: 'supervisor_id', nullable: true })
-  supervisorId: number | null;
 
   @OneToMany(() => User, (user) => user.supervisor)
   subordinates: User[];
