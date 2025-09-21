@@ -9,6 +9,10 @@ import { PolicyCategoryModule } from './policy-category/policy-category.module';
 import { PolicyPlanModule } from './policy-plan/policy-plan.module';
 import { PolicyPlan } from './policy-plan/policy-plan.entities';
 import { PolicyCategory } from './policy-category/policy-category.entities';
+import { LeadModule } from './lead/lead.module';
+import { LeadInteractionModule } from './lead-interaction/lead-interaction.module';
+import { Lead } from './lead/lead.entities';
+import { LeadInteraction } from './lead-interaction/lead-interaction.entities';
 
 @Module({
   imports: [
@@ -18,7 +22,14 @@ import { PolicyCategory } from './policy-category/policy-category.entities';
       port: 3306,
       username: 'root',
       database: 'crm_insurance_project_db',
-      entities: [User, Agency, PolicyPlan, PolicyCategory],
+      entities: [
+        User,
+        Agency,
+        PolicyPlan,
+        PolicyCategory,
+        Lead,
+        LeadInteraction,
+      ],
       synchronize: true,
       logging: false,
     }),
@@ -27,6 +38,8 @@ import { PolicyCategory } from './policy-category/policy-category.entities';
     SeedModule,
     PolicyCategoryModule,
     PolicyPlanModule,
+    LeadModule,
+    LeadInteractionModule,
   ],
   controllers: [],
   providers: [],
