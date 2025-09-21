@@ -1,3 +1,4 @@
+import { PolicyCategory } from 'src/policy-category/policy-category.entities';
 import { User } from 'src/user/user.entities';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
@@ -33,4 +34,7 @@ export class Agency {
   // Relations
   @OneToMany(() => User, (user) => user.agency)
   users: User[];
+
+  @OneToMany(() => PolicyCategory, (category) => category.agency)
+  policyCategories: PolicyCategory[];
 }
