@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Agency } from 'src/agency/agency.entities';
 import * as bcrypt from 'bcrypt';
+import { LeadInteraction } from 'src/lead-interaction/lead-interaction.entities';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -78,4 +79,7 @@ export class User {
 
   @OneToMany(() => User, (user) => user.supervisor)
   subordinates: User[];
+
+  @OneToMany(() => LeadInteraction, (interaction) => interaction.agent)
+  interactions: LeadInteraction[];
 }
