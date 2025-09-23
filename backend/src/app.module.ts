@@ -13,6 +13,11 @@ import { LeadModule } from './lead/lead.module';
 import { LeadInteractionModule } from './lead-interaction/lead-interaction.module';
 import { Lead } from './lead/lead.entities';
 import { LeadInteraction } from './lead-interaction/lead-interaction.entities';
+import { MessagingModule } from './messaging/messaging.module';
+import { ChannelMember } from './messaging/entities/channel-member.entity';
+import { Message } from './messaging/entities/message.entity';
+import { MessageStatus } from './messaging/entities/message-status.entity';
+import { Channel } from './messaging/entities/channel.entity';
 
 @Module({
   imports: [
@@ -29,6 +34,10 @@ import { LeadInteraction } from './lead-interaction/lead-interaction.entities';
         PolicyCategory,
         Lead,
         LeadInteraction,
+        Channel,
+        ChannelMember,
+        Message,
+        MessageStatus,
       ],
       synchronize: true,
       logging: false,
@@ -40,6 +49,7 @@ import { LeadInteraction } from './lead-interaction/lead-interaction.entities';
     PolicyPlanModule,
     LeadModule,
     LeadInteractionModule,
+    MessagingModule,
   ],
   controllers: [],
   providers: [],
