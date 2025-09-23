@@ -31,4 +31,10 @@ export const DashboardMenu: DashboardMenuProps[] = [
     icon: "home",
     link: "/dashboard",
   },
+  {
+    id: uuid(),
+    title: "Message",
+    icon: "mail",
+    link: "/message",
+  },
 ];
