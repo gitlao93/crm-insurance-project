@@ -1,31 +1,47 @@
 // src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { User } from 'src/user/user.entities';
 import { UserService } from 'src/user/user.service';
+import * as bcrypt from 'bcrypt';
+import { UserResponseDto } from 'src/user/dto/response-user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private userService: UserService,
-    private jwtService: JwtService,
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<User> {
+  async validateUser(email: string, pass: string): Promise<UserResponseDto> {
     const user = await this.userService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+    const isMatch = await bcrypt.compare(pass, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
-    return user;
+    return plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  login(user: User) {
-    const payload = { sub: user };
+  login(user: UserResponseDto) {
+    if (!user.id) {
+      throw new BadRequestException('Invalid user data for login');
+    }
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
+      user, // include sanitized user
     };
   }
 }

@@ -13,7 +13,7 @@ import type { RequestWithUser } from './types/request-with-user.type';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('login')
   async login(@Body() body: { email: string; password: string }) {
@@ -24,6 +24,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   getProfile(@Request() req: RequestWithUser) {
-    return req.user;
+    return req.user; // already UserResponseDto from JwtStrategy
   }
 }

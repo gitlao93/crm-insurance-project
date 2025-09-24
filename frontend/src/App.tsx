@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import RootLayout from "./layouts/RootLayout";
 import Message from "./pages/Message";
+import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
   return (
@@ -10,10 +11,23 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<RootLayout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="message" element={<Message />} />
+          <Route
+            path="dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="message"
+            element={
+              <PrivateRoute>
+                <Message />
+              </PrivateRoute>
+            }
+          />
         </Route>
-        <Route path="/" element={<Login />} />
       </Routes>
     </BrowserRouter>
   );

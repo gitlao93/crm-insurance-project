@@ -1,22 +1,31 @@
-import { Injectable } from '@nestjs/common';
+// src/auth/jwt.strategy.ts
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt';
-import { JwtPayload } from './types/jwt-payload.type';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UserService } from 'src/user/user.service';
+import { UserResponseDto } from 'src/user/dto/response-user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
-    const options: StrategyOptions = {
+  constructor(private readonly userService: UserService) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    super({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET || 'super-secret-key',
-    };
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    super(options);
+    });
   }
 
-  validate(payload: JwtPayload) {
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+  async validate(payload: { sub: number; email: string; role: string }) {
+    const user = await this.userService.findOne(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 }
