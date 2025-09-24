@@ -51,10 +51,11 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.userRepo.findOne({
+    const user = await this.userRepo.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'role', 'isActive'], // include password for login
+      relations: ['agency', 'supervisor'], // include relations if needed
     });
+    return user;
   }
 
   async update(id: number, dto: UpdateUserDto): Promise<User> {
