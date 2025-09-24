@@ -4,6 +4,8 @@ import { User } from './user.entities';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserResponseDto } from './dto/response-user.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UserService {
@@ -27,14 +29,23 @@ export class UserService {
     return this.findOne(user.id);
   }
 
-  async findAll(agencyId?: number): Promise<User[]> {
+  async findAll(agencyId?: number): Promise<UserResponseDto[]> {
     if (agencyId) {
-      return await this.userRepo.find({
+      const user = await this.userRepo.find({
         where: { agencyId },
         relations: ['agency', 'supervisor'],
       });
+
+      return plainToInstance(UserResponseDto, user, {
+        excludeExtraneousValues: true,
+      });
     }
-    return await this.userRepo.find({ relations: ['agency', 'supervisor'] });
+    const user = await this.userRepo.find({
+      relations: ['agency', 'supervisor'],
+    });
+    return plainToInstance(UserResponseDto, user, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async findOne(id: number): Promise<User> {

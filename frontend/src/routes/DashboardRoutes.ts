@@ -33,6 +33,12 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
+    title: "User",
+    icon: "user",
+    link: "/user",
+  },
+  {
+    id: uuid(),
     title: "Message",
     icon: "mail",
     link: "/message",

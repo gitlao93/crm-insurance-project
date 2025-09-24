@@ -1,6 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer';
 import { UserRole } from '../user.entities';
-import { Agency } from 'src/agency/agency.entities';
 
 export class SupervisorSummaryDto {
   @Expose()
@@ -49,10 +48,6 @@ export class UserResponseDto {
 
   @Expose()
   agencyId: number;
-
-  @Expose()
-  @Type(() => Agency)
-  agency: Agency;
 
   @Expose()
   supervisorId?: number;

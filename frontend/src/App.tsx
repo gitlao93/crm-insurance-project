@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import RootLayout from "./layouts/RootLayout";
 import Message from "./pages/Message";
 import PrivateRoute from "./components/PrivateRoute";
+import User from "./pages/User";
 
 function App() {
   return (
@@ -16,6 +17,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="user"
+            element={
+              <PrivateRoute>
+                <User />
               </PrivateRoute>
             }
           />
