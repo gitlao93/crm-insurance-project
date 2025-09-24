@@ -32,9 +32,9 @@ export interface CreateUserRequest {
   email: string;
   password?: string;
   phoneNumber: string;
-  landlineNumber?: string;
+  landlineNumber?: string | null;
   officeHours?: string;
-  isActive: boolean;
+  isActive?: boolean;
   role: UserRole;
   agencyId: number;
   supervisorId?: number | null;

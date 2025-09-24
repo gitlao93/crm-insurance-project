@@ -14,15 +14,16 @@ import DataTable, { type TableColumn } from "react-data-table-component";
 import { useEffect, useState } from "react";
 import { userService, type User } from "../services/userService";
 import { PencilSquare, PersonX } from "react-bootstrap-icons";
+import UserCreateModal from "./user-modal/UserCreateModal";
 
 export default function UserPage() {
   const storedUser = localStorage.getItem("user") ?? "";
   const userObj = JSON.parse(storedUser);
-  console.log(userObj);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -175,7 +176,12 @@ export default function UserPage() {
               </Form.Select>
             </Col>
             <Col md={5} className="d-grid d-md-flex justify-content-md-end">
-              <Button variant="outline-primary">Add User</Button>
+              <Button
+                onClick={() => setShowCreate(true)}
+                variant="outline-primary"
+              >
+                Add User
+              </Button>
             </Col>
           </Row>
 
@@ -199,6 +205,11 @@ export default function UserPage() {
           )}
         </Card.Body>
       </Card>
+      <UserCreateModal
+        show={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSuccess={fetchUsers}
+      />
     </Container>
   );
 }

@@ -8,8 +8,10 @@ import {
   Matches,
   MinLength,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 import { UserRole } from '../user.entities';
+import { Exclude } from 'class-transformer';
 
 export class CreateUserDto {
   @IsString()
@@ -32,13 +34,18 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   @MinLength(6, { message: 'Password must be at least 6 characters long' })
-  password: string;
+  @Exclude()
+  password?: string;
 
   @IsString()
   @Matches(/^09\d{9}$/, {
     message: 'phoneNumber must be 11 digits and start with 09',
   })
   phoneNumber: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive: boolean;
 
   @IsOptional()
   @IsString()

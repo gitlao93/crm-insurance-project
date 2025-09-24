@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/response-user.dto';
 import { plainToInstance } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -21,7 +22,16 @@ export class UserService {
     if (existingUser) {
       throw new BadRequestException('Email already exists');
     }
-    const user = this.userRepo.create(dto);
+    console.log(dto.password);
+    const password = dto.password ?? 'password123';
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const user = this.userRepo.create({
+      ...dto,
+      password: hashedPassword,
+    });
     await this.userRepo.save(user);
 
     // Return with agency + supervisor for proper response DTO
