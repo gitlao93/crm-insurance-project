@@ -7,11 +7,14 @@ import {
   Patch,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PolicyCategoryService } from './policy-category.service';
 import { CreatePolicyCategoryDto } from './dto/create-policy-category.dto';
 import { UpdatePolicyCategoryDto } from './dto/update-policy-category.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('policy-categories')
 export class PolicyCategoryController {
   constructor(private readonly categoryService: PolicyCategoryService) {}

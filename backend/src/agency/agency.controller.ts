@@ -6,13 +6,16 @@ import {
   Param,
   Patch,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { AgencyService } from './agency.service';
 import { CreateAgencyDto } from './dto/create-agency.dto';
 import { UpdateAgencyDto } from './dto/update-agency.dto';
 import { plainToInstance } from 'class-transformer';
 import { AgencyResponseDto } from './dto/response-agency.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('agencies')
 export class AgencyController {
   constructor(private readonly agencyService: AgencyService) {}

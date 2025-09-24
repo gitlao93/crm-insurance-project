@@ -50,6 +50,13 @@ export class UserService {
     return user;
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepo.findOne({
+      where: { email },
+      select: ['id', 'email', 'password', 'role', 'isActive'], // include password for login
+    });
+  }
+
   async update(id: number, dto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
 

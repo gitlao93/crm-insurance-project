@@ -5,11 +5,14 @@ import {
   Param,
   Body,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { UpdateMessageStatusDto } from '../dto/message-status.dto';
 import { MessageStatus } from '../entities/message-status.entity';
 import { MessageStatusService } from '../service/message-status.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('messages/:messageId/statuses')
 export class MessageStatusesController {
   constructor(private readonly statusService: MessageStatusService) {}

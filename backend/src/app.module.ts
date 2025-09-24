@@ -18,6 +18,7 @@ import { ChannelMember } from './messaging/entities/channel-member.entity';
 import { Message } from './messaging/entities/message.entity';
 import { MessageStatus } from './messaging/entities/message-status.entity';
 import { Channel } from './messaging/entities/channel.entity';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { Channel } from './messaging/entities/channel.entity';
     LeadModule,
     LeadInteractionModule,
     MessagingModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

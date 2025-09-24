@@ -8,12 +8,15 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { LeadInteractionService } from './lead-interaction.service';
 import { CreateLeadInteractionDto } from './dto/create-lead-interaction.dto';
 import { UpdateLeadInteractionDto } from './dto/update-lead-interaction.dto';
 import { LeadInteraction } from './lead-interaction.entities';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('lead-interactions')
 export class LeadInteractionController {
   constructor(

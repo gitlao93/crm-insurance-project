@@ -7,6 +7,7 @@ import {
   Delete,
   ParseIntPipe,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import {
   AddChannelMemberDto,
@@ -14,7 +15,9 @@ import {
 } from '../dto/channel-member.dto';
 import { ChannelMember } from '../entities/channel-member.entity';
 import { ChannelMembersService } from '../service/channel-members.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('channels/:channelId/members')
 export class ChannelMembersController {
   constructor(private readonly memberService: ChannelMembersService) {}

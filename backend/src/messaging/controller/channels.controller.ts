@@ -7,11 +7,14 @@ import {
   Patch,
   Delete,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateChannelDto, UpdateChannelDto } from '../dto/channel.dto';
 import { Channel } from '../entities/channel.entity';
 import { ChannelsService } from '../service/channels.service';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('channels')
 export class ChannelsController {
   constructor(private readonly channelService: ChannelsService) {}

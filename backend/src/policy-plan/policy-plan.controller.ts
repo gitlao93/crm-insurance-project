@@ -7,11 +7,14 @@ import {
   Patch,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PolicyPlanService } from './policy-plan.service';
 import { CreatePolicyPlanDto } from './dto/create-policy-plan.dto';
 import { UpdatePolicyPlanDto } from './dto/update-policy-plan.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('policy-plans')
 export class PolicyPlanController {
   constructor(private readonly planService: PolicyPlanService) {}
