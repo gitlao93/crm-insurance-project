@@ -6,6 +6,7 @@ export enum InteractionType {
   CALL = 'call',
   MEETING = 'meeting',
   FOLLOW_UP = 'follow-up',
+  EMAIL = 'email',
 }
 
 export enum InteractionStatus {

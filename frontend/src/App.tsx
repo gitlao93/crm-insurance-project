@@ -5,6 +5,7 @@ import RootLayout from "./layouts/RootLayout";
 import Message from "./pages/Message";
 import PrivateRoute from "./components/PrivateRoute";
 import User from "./pages/User";
+import Lead from "./pages/Lead";
 
 function App() {
   return (
@@ -33,6 +34,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Message />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="lead"
+            element={
+              <PrivateRoute>
+                <Lead />
               </PrivateRoute>
             }
           />
