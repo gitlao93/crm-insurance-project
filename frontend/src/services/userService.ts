@@ -20,7 +20,7 @@ export interface User {
   officeHours?: string;
   role: UserRole;
   agencyId: number;
-  supervisorId?: number;
+  supervisorId?: number | null;
   isActive: boolean;
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
@@ -83,19 +83,19 @@ export const userService = {
   },
 
   async deactivateUser(id: number): Promise<User> {
-    const response = await api.patch(`/users/${id}/deactivate`);
+    const response = await api.patch(`/users/deactivate/${id}`);
     return response.data;
   },
 
   async activateUser(id: number): Promise<User> {
-    const response = await api.patch(`/users/${id}/activate`);
+    const response = await api.patch(`/users/activate/${id}`);
     return response.data;
   },
 
   async isEmailTaken(email: string): Promise<boolean> {
-    const response = await api.get<{ exists: boolean }>(
-      `/users/check-email/${encodeURIComponent(email)}`
-    );
-    return response.data.exists;
+    const response = await api.get(`/users/check-email`, {
+      params: { email }, // axios will handle encoding
+    });
+    return response.data.exists; // assuming your backend returns { exists: true/false }
   },
 };

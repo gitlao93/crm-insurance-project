@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { userService, type User } from "../services/userService";
 import { PencilSquare, PersonX } from "react-bootstrap-icons";
 import UserCreateModal from "./user-modal/UserCreateModal";
+import UserEditModal from "./user-modal/UserEditModal";
 
 export default function UserPage() {
   const storedUser = localStorage.getItem("user") ?? "";
@@ -24,6 +25,8 @@ export default function UserPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -48,6 +51,7 @@ export default function UserPage() {
   const filteredUsers = users.filter((u) => {
     const currentUserId = userObj.id;
     const isNotSelf = u.id !== currentUserId;
+    const isNotActive = u.isActive === false;
     const matchesSearch =
       u.firstName.toLowerCase().includes(search.toLowerCase()) ||
       u.lastName.toLowerCase().includes(search.toLowerCase()) ||
@@ -55,7 +59,7 @@ export default function UserPage() {
 
     const matchesRole = roleFilter ? u.role === roleFilter : true;
 
-    return isNotSelf && matchesSearch && matchesRole;
+    return isNotSelf && matchesSearch && matchesRole && !isNotActive;
   });
 
   const paginationComponentOptions = {
@@ -70,6 +74,23 @@ export default function UserPage() {
         padding: "10px",
       },
     },
+  };
+
+  const handleDeactivate = async (userId: number) => {
+    if (window.confirm("Are you sure you want to deactivate this user?")) {
+      try {
+        await userService.deactivateUser(userId);
+        fetchUsers();
+      } catch (err) {
+        console.error("Failed to deactivate user", err);
+        alert("Failed to deactivate user. Please try again.");
+      }
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setShowEdit(true);
   };
 
   const columns: TableColumn<User>[] = [
@@ -108,7 +129,7 @@ export default function UserPage() {
           >
             <span
               role="button"
-              // onClick={() => handleEdit(row)}
+              onClick={() => handleEdit(row)}
               style={{
                 cursor: "pointer",
                 display: "inline-block",
@@ -127,7 +148,7 @@ export default function UserPage() {
           >
             <span
               role="button"
-              // onClick={() => handleDeactivate(row.id)}
+              onClick={() => handleDeactivate(row.id)}
               style={{
                 cursor: "pointer",
                 display: "inline-block",
@@ -209,6 +230,12 @@ export default function UserPage() {
         show={showCreate}
         onClose={() => setShowCreate(false)}
         onSuccess={fetchUsers}
+      />
+      <UserEditModal
+        show={showEdit}
+        onClose={() => setShowEdit(false)}
+        onSuccess={fetchUsers}
+        user={selectedUser}
       />
     </Container>
   );

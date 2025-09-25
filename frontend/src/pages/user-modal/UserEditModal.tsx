@@ -1,81 +1,34 @@
 import { Modal, Button, Form } from "react-bootstrap";
-import { useCallback, useEffect, useState } from "react";
-import {
-  UserRole,
-  userService,
-  type CreateUserRequest,
-  type User,
-} from "../../services/userService";
+import { useState, useEffect, useCallback } from "react";
+import { UserRole, userService, type User } from "../../services/userService";
 
-interface UserCreateModalProps {
+interface UserEditModalProps {
   show: boolean;
   onClose: () => void;
-  onSuccess: () => void; // refetch users after success
+  onSuccess: () => void;
+  user: User | null;
 }
 
-export default function UserCreateModal({
+export default function UserEditModal({
   show,
   onClose,
   onSuccess,
-}: UserCreateModalProps) {
-  const storedUser = localStorage.getItem("user") ?? "";
-  const userObj = JSON.parse(storedUser);
-  const [formData, setFormData] = useState<CreateUserRequest>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    phoneNumber: "",
-    landlineNumber: null,
-    officeHours: "8:00am to 5:00pm",
-    role: UserRole.AGENT,
-    agencyId: userObj.agencyId, // ✅ if you already have agencyId from logged-in user
-    supervisorId: null, // start as null
-  });
+  user,
+}: UserEditModalProps) {
+  let userObj: Partial<User> = {};
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) userObj = JSON.parse(storedUser);
+  } catch (err) {
+    console.warn("Failed to parse stored user", err);
+  }
+
+  const [formData, setFormData] = useState<User | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof User, string>>>({});
   const [supervisors, setSupervisors] = useState<User[]>([]);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof CreateUserRequest, string>>
-  >({});
-
-  const handleChange =
-    (field: keyof CreateUserRequest) =>
-    (
-      e: React.ChangeEvent<
-        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-      >
-    ) => {
-      const value = e.target.value;
-
-      // Update form data
-      setFormData((prev) => ({ ...prev, [field]: value }));
-
-      // Live validation
-      const errorMsg = validateField(field, value);
-      setErrors((prev) => ({ ...prev, [field]: errorMsg }));
-    };
-
-  const handleSubmit = async () => {
-    try {
-      if (!formData) return;
-
-      const payload = {
-        ...formData,
-        supervisorId:
-          formData.role === UserRole.COLLECTION_SUPERVISOR
-            ? Number(userObj.id) // logged-in supervisor becomes their own supervisor
-            : Number(formData.supervisorId),
-      };
-
-      await userService.createUser(payload);
-      onSuccess();
-      onClose();
-    } catch (err) {
-      console.error("Failed to create user", err);
-    }
-  };
 
   const fetchSupervisors = useCallback(async () => {
-    if (!formData.agencyId) return;
+    if (!userObj?.agencyId) return;
     try {
       const users = await userService.getUsers(userObj.agencyId);
       const filtered = users.filter(
@@ -85,46 +38,97 @@ export default function UserCreateModal({
     } catch (err) {
       console.error("Failed to fetch supervisors", err);
     }
-  }, [formData.agencyId, userObj.agencyId]);
+  }, [userObj?.agencyId]);
 
-  const handleEmailBlur = async () => {
-    if (!formData.email || errors.email) return;
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        ...user,
+        supervisorId: user.supervisorId ?? user.supervisor?.id ?? null,
+      });
+    } else {
+      setFormData(null);
+    }
+  }, [user]);
 
+  useEffect(() => {
+    if (show) fetchSupervisors();
+  }, [show, fetchSupervisors]);
+
+  const handleChange =
+    (field: keyof User) =>
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >
+    ) => {
+      const value = e.target.value;
+      setFormData((prev) => (prev ? { ...prev, [field]: value } : prev));
+
+      const errorMsg = validateField(field, value);
+      setErrors((prev) => ({ ...prev, [field]: errorMsg }));
+    };
+
+  function getChangedFields<T extends object>(
+    original: T,
+    updated: T
+  ): Partial<T> {
+    const changed: Partial<T> = {};
+    (Object.keys(updated) as (keyof T)[]).forEach((key) => {
+      if (updated[key] !== original[key]) {
+        changed[key] = updated[key];
+      }
+    });
+    return changed;
+  }
+
+  const handleSubmit = async () => {
+    if (!formData) return;
     try {
-      const exists = await userService.isEmailTaken(formData.email);
-      setErrors((prev) => ({
-        ...prev,
-        email: exists ? "Email already exists" : "",
-      }));
+      if (!user) throw new Error("No user data to compare changes");
+      const changes = getChangedFields(user, formData);
+
+      if (Object.keys(changes).length === 0) {
+        onClose();
+        return;
+      }
+      const payload = {
+        ...changes,
+        supervisorId:
+          changes.role === UserRole.COLLECTION_SUPERVISOR
+            ? Number(userObj.id) // logged-in supervisor becomes their own supervisor
+            : Number(changes.supervisorId),
+      };
+
+      await userService.updateUser(user.id, payload);
+      onSuccess();
+      onClose();
     } catch (err) {
-      console.error("Email check failed", err);
+      console.error("Failed to update user", err);
     }
   };
 
-  const validateField = (
-    field: keyof CreateUserRequest,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value: any
-  ): string => {
+  const validateField = (field: keyof User, value: unknown): string => {
     switch (field) {
       case "firstName":
       case "lastName":
         if (!value) return "This field is required";
-        if (!/^[A-Za-z\s'-]*$/.test(value)) {
+        if (typeof value === "string" && !/^[A-Za-z\s'-]*$/.test(value)) {
           return "Only letters, spaces, apostrophes, and hyphens allowed";
         }
         break;
       case "email":
         if (!value) return "This field is required";
-        if (!/^\S+@\S+\.\S+$/.test(value)) return "Invalid email format";
+        if (typeof value === "string" && !/^\S+@\S+\.\S+$/.test(value))
+          return "Invalid email format";
         break;
       case "phoneNumber":
         if (!value) return "This field is required";
-        if (!/^0\d{10}$/.test(value))
+        if (typeof value === "string" && !/^0\d{10}$/.test(value))
           return "Phone number must be 11 digits and start with 0";
         break;
       case "landlineNumber":
-        if (value && !/^\d{7,15}$/.test(value)) {
+        if (value && typeof value === "string" && !/^\d{7,15}$/.test(value)) {
           return "Landline must be between 7 and 15 digits";
         }
         break;
@@ -134,13 +138,12 @@ export default function UserCreateModal({
     return "";
   };
 
-  useEffect(() => {
-    fetchSupervisors();
-  }, [fetchSupervisors]);
+  if (!formData) return null;
+
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Create User</Modal.Title>
+        <Modal.Title>Edit User</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Form>
@@ -157,6 +160,7 @@ export default function UserCreateModal({
               {errors.firstName}
             </Form.Control.Feedback>
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Last Name</Form.Label>
             <Form.Control
@@ -170,20 +174,21 @@ export default function UserCreateModal({
               {errors.lastName}
             </Form.Control.Feedback>
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Email</Form.Label>
             <Form.Control
               type="email"
               name="email"
+              readOnly
               value={formData.email}
-              onChange={handleChange("email")}
-              onBlur={handleEmailBlur}
               isInvalid={!!errors.email}
             />
             <Form.Control.Feedback type="invalid">
               {errors.email}
             </Form.Control.Feedback>
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Phone</Form.Label>
             <Form.Control
@@ -197,6 +202,7 @@ export default function UserCreateModal({
               {errors.phoneNumber}
             </Form.Control.Feedback>
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Landline</Form.Label>
             <Form.Control
@@ -210,41 +216,53 @@ export default function UserCreateModal({
               {errors.landlineNumber}
             </Form.Control.Feedback>
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Office Hours</Form.Label>
             <Form.Select
               name="officeHours"
               value={formData.officeHours}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  officeHours: e.target.value,
-                })
-              }
+              onChange={handleChange("officeHours")}
             >
               <option value="8:00am to 5:00pm">8:00am to 5:00pm</option>
               <option value="10:00am to 7:00pm">10:00am to 7:00pm</option>
               <option value="1:00pm to 9:00pm">1:00pm to 9:00pm</option>
             </Form.Select>
           </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>Role</Form.Label>
             <Form.Select
               name="role"
               value={formData.role}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  role: e.target.value as UserRole,
-                })
-              }
+              onChange={(e) => {
+                const newRole = e.target.value as UserRole;
+                setFormData((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    role: newRole,
+                    supervisorId:
+                      newRole === UserRole.COLLECTION_SUPERVISOR
+                        ? userObj.id ?? null
+                        : prev.supervisorId,
+                  };
+                });
+              }}
+              isInvalid={!!errors.role}
             >
-              <option value="agent">Agent</option>
-              <option value="collection_supervisor">
+              <option value={UserRole.AGENT}>Agent</option>
+              <option value={UserRole.COLLECTION_SUPERVISOR}>
                 Collection Supervisor
               </option>
+              <option value={UserRole.ADMIN}>Admin</option>
             </Form.Select>
+
+            <Form.Control.Feedback type="invalid">
+              {errors.role}
+            </Form.Control.Feedback>
           </Form.Group>
+
           {formData.role === UserRole.AGENT && (
             <Form.Group className="mb-3">
               <Form.Label>Supervisor</Form.Label>
@@ -254,11 +272,12 @@ export default function UserCreateModal({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    supervisorId: Number(e.target.value),
+                    supervisorId: e.target.value
+                      ? Number(e.target.value)
+                      : null,
                   })
                 }
               >
-                <option value="">-- Select Supervisor --</option>
                 {supervisors.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.firstName} {s.lastName}
@@ -274,7 +293,7 @@ export default function UserCreateModal({
           Cancel
         </Button>
         <Button variant="primary" onClick={handleSubmit}>
-          Create
+          Save Changes
         </Button>
       </Modal.Footer>
     </Modal>

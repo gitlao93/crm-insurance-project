@@ -32,6 +32,11 @@ export class UserController {
     });
   }
 
+  @Get('check-email')
+  async checkEmail(@Query('email') email: string) {
+    const exists = await this.userService.emailExists(email);
+    return { exists };
+  }
   // ✅ Find all (with optional agencyId filter)
   @Get()
   async findAll(@Query('agencyId') agencyId?: number) {
@@ -50,7 +55,7 @@ export class UserController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateUserDto,
-  ): Promise<User> {
+  ) {
     return this.userService.update(id, dto);
   }
 

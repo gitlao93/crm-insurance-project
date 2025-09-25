@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entities';
 import { Repository } from 'typeorm';
@@ -79,11 +83,53 @@ export class UserService {
     return user;
   }
 
-  async update(id: number, dto: UpdateUserDto): Promise<User> {
-    const user = await this.findOne(id);
+  async emailExists(email: string): Promise<boolean> {
+    const user = await this.userRepo.findOne({
+      where: { email },
+      relations: ['agency', 'supervisor'],
+    });
+    return !!user;
+  }
 
-    Object.assign(user, dto);
-    return await this.userRepo.save(user);
+  async update(id: number, dto: UpdateUserDto) {
+    const user = await this.userRepo.findOne({
+      where: { id },
+      relations: ['supervisor', 'agency'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Handle supervisorId separately
+    if (dto.supervisorId !== undefined) {
+      if (dto.supervisorId === null) {
+        user.supervisor = null;
+        user.supervisorId = null;
+      } else {
+        const supervisor = await this.userRepo.findOne({
+          where: { id: dto.supervisorId },
+        });
+        if (!supervisor) {
+          throw new NotFoundException(
+            `Supervisor with ID ${dto.supervisorId} not found`,
+          );
+        }
+        user.supervisor = supervisor;
+        user.supervisorId = supervisor.id;
+      }
+    }
+
+    // Merge other fields (except supervisorId)
+    Object.assign(user, { ...dto, supervisorId: user.supervisorId });
+
+    await this.userRepo.save(user);
+
+    // Reload to return fresh relations
+    return this.userRepo.findOne({
+      where: { id },
+      relations: ['supervisor', 'agency'],
+    });
   }
 
   async deactivate(id: number): Promise<void> {
