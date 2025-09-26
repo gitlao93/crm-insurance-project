@@ -45,6 +45,12 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
+    title: "Policy Plan",
+    icon: "list",
+    link: "/policy-plan",
+  },
+  {
+    id: uuid(),
     title: "Lead",
     icon: "book",
     link: "/lead",
@@ -52,7 +58,7 @@ export const DashboardMenu: DashboardMenuProps[] = [
   {
     id: uuid(),
     title: "Message",
-    icon: "mail",
+    icon: "slack",
     link: "/message",
   },
 ];

@@ -16,7 +16,6 @@ export interface PolicyPlan {
   currency: string;
   coverageAmount: number;
   status: "active" | "inactive";
-  note?: string;
   category?: PolicyCategory;
   createdAt?: string;
   updatedAt?: string;
@@ -36,6 +35,8 @@ export interface CreatePolicyPlanRequest {
   coverageAmount: number;
   status?: "active" | "inactive";
 }
+
+export type UpdatePolicyPlanRequest = Partial<CreatePolicyPlanRequest>;
 
 export const policyCategoryService = {
   // ✅ Create a new category
@@ -81,5 +82,29 @@ export const policyCategoryService = {
   async createPlan(data: CreatePolicyPlanRequest): Promise<PolicyPlan> {
     const res = await api.post<PolicyPlan>("/policy-plans", data);
     return res.data;
+  },
+};
+
+export const policyPlanService = {
+  async createPlan(dto: CreatePolicyPlanRequest) {
+    const { data } = await api.post<PolicyPlan>("/policy-plans", dto);
+    return data;
+  },
+  async getPlans(categoryId?: number) {
+    const { data } = await api.get<PolicyPlan[]>("/policy-plans", {
+      params: categoryId ? { categoryId } : {},
+    });
+    return data;
+  },
+  async getPlanById(id: number) {
+    const { data } = await api.get<PolicyPlan>(`/policy-plans/${id}`);
+    return data;
+  },
+  async updatePlan(id: number, dto: UpdatePolicyPlanRequest) {
+    const { data } = await api.patch<PolicyPlan>(`/policy-plans/${id}`, dto);
+    return data;
+  },
+  async deletePlan(id: number) {
+    await api.delete(`/policy-plans/${id}`);
   },
 };
