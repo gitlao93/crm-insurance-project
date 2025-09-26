@@ -6,6 +6,7 @@ import Message from "./pages/Message";
 import PrivateRoute from "./components/PrivateRoute";
 import User from "./pages/User";
 import Lead from "./pages/Lead";
+import PolicyCategory from "./pages/PolicyCategory";
 
 function App() {
   return (
@@ -26,6 +27,14 @@ function App() {
             element={
               <PrivateRoute>
                 <User />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="policy-category"
+            element={
+              <PrivateRoute>
+                <PolicyCategory />
               </PrivateRoute>
             }
           />
