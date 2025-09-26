@@ -42,6 +42,7 @@ export interface CreateLeadRequest {
   email: string;
   phoneNumber: string;
   agentId: number;
+  agencyId: number;
   policyPlanId: number;
   status: LeadStatus;
 }

@@ -18,6 +18,7 @@ import DataTable, { type TableColumn } from "react-data-table-component";
 import { leadService, type Lead } from "../services/leadServices";
 import { BoxArrowDownRight } from "react-bootstrap-icons";
 import LeadInteraction from "./lead-offcanvas/LeadInteraction";
+import LeadCreateModal from "./lead-modal/LeadCreateModal";
 
 export default function UserPage() {
   const storedUser = localStorage.getItem("user") ?? "";
@@ -223,6 +224,12 @@ export default function UserPage() {
           )}
         </Card.Body>
       </Card>
+
+      <LeadCreateModal
+        show={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSuccess={fetchLeads}
+      />
       <Offcanvas
         show={showOffcanvas}
         onHide={handleCloseOffcanvas}
