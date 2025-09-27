@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Channel } from '../entities/channel.entity';
 import { CreateChannelDto, UpdateChannelDto } from '../dto/channel.dto';
 import { ChannelMember, ChannelRole } from '../entities/channel-member.entity';
@@ -32,8 +32,20 @@ export class ChannelsService {
     return this.channelRepo.save(channel);
   }
 
-  async findAll(): Promise<Channel[]> {
-    return this.channelRepo.find({ relations: ['createdBy'] });
+  async findAll(userId: number, agencyId: number): Promise<Channel[]> {
+    return this.channelRepo
+      .createQueryBuilder('channel')
+      .leftJoinAndSelect('channel.createdBy', 'createdBy')
+      .leftJoinAndSelect('channel.members', 'members')
+      .leftJoinAndSelect('members.user', 'user')
+      .where('channel.agencyId = :agencyId', { agencyId })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('channel.isPrivate = false') // public channels in agency
+            .orWhere('members.userId = :userId', { userId }); // OR user is a member
+        }),
+      )
+      .getMany();
   }
 
   async findOne(id: number): Promise<Channel> {

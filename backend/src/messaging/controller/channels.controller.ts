@@ -8,6 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CreateChannelDto, UpdateChannelDto } from '../dto/channel.dto';
 import { Channel } from '../entities/channel.entity';
@@ -25,8 +26,12 @@ export class ChannelsController {
   }
 
   @Get()
-  async findAll(): Promise<Channel[]> {
-    return this.channelService.findAll();
+  async findAll(
+    @Query('userId', ParseIntPipe) userId: number,
+    @Query('agencyId', ParseIntPipe) agencyId: number,
+  ): Promise<Channel[]> {
+    const channel = await this.channelService.findAll(userId, agencyId);
+    return channel;
   }
 
   @Get(':id')
