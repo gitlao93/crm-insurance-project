@@ -1,6 +1,13 @@
 import { Lead } from 'src/lead/lead.entities';
 import { User } from 'src/user/user.entities';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export enum InteractionType {
   CALL = 'call',
@@ -54,4 +61,9 @@ export class LeadInteraction {
 
   @ManyToOne(() => User, (user) => user.interactions, { onDelete: 'CASCADE' })
   agent: User;
+  @CreateDateColumn({ type: 'timestamp' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamp' })
+  updatedAt: Date;
 }

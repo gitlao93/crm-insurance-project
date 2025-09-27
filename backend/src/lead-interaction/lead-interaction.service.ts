@@ -21,7 +21,7 @@ export class LeadInteractionService {
     return this.leadInteractionRepository.find({
       where: { leadId },
       relations: ['lead', 'agent'],
-      order: { dueDate: 'ASC' },
+      order: { createdAt: 'DESC' },
     });
   }
 

@@ -6,6 +6,7 @@ import {
   Col,
   Container,
   Form,
+  Modal,
   Offcanvas,
   OverlayTrigger,
   Row,
@@ -15,10 +16,16 @@ import {
 import PageHeading from "../widgets/PageHeading";
 import { useCallback, useEffect, useState } from "react";
 import DataTable, { type TableColumn } from "react-data-table-component";
-import { leadService, type Lead } from "../services/leadServices";
-import { BoxArrowDownRight } from "react-bootstrap-icons";
+import {
+  InteractionType,
+  leadService,
+  LeadStatus,
+  type Lead,
+} from "../services/leadServices";
+import { BoxArrowDownRight, PencilSquare } from "react-bootstrap-icons";
 import LeadInteraction from "./lead-offcanvas/LeadInteraction";
 import LeadCreateModal from "./lead-modal/LeadCreateModal";
+import LeadInteractionCreateModal from "./lead-modal/LeadInteractionCreateModal";
 
 export default function UserPage() {
   const storedUser = localStorage.getItem("user") ?? "";
@@ -30,6 +37,20 @@ export default function UserPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [showOffcanvas, setShowOffcanvas] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLeadId, setSelectedLeadId] = useState<number>(0);
+  const [showCreateInteraction, setShowCreateInteraction] = useState(false);
+  const [interActionType, setInteractionType] =
+    useState<InteractionType | null>();
+  const [refreshInteractionsFlag, setRefreshInteractionsFlag] = useState(0);
+
+  // --- Lead status modal ---
+  const [leadId, setLeadId] = useState<number | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [newStatus, setNewStatus] = useState<LeadStatus>(LeadStatus.NEW);
+
+  const handleInteractionCreated = () => {
+    setRefreshInteractionsFlag((prev) => prev + 1);
+  };
 
   const fetchLeads = useCallback(async () => {
     try {
@@ -132,25 +153,6 @@ export default function UserPage() {
               <BoxArrowDownRight size={18} className="text-primary" />
             </span>
           </OverlayTrigger>
-
-          {/* <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id={`tooltip-deactivate-${row.id}`}>Deactivate</Tooltip>
-            }
-          >
-            <span
-              role="button"
-              onClick={() => handleDeactivate(row.id)}
-              style={{
-                cursor: "pointer",
-                display: "inline-block",
-                lineHeight: 0,
-              }}
-            >
-              <PersonX size={18} className="text-danger" />
-            </span>
-          </OverlayTrigger> */}
         </div>
       ),
       ignoreRowClick: true,
@@ -162,12 +164,56 @@ export default function UserPage() {
   const handleShowInteraction = (lead: Lead) => {
     setSelectedLead(lead);
     setShowOffcanvas(true);
+    setSelectedLeadId(lead?.id ?? 0);
+  };
+
+  const handleShowCreateInteraction = (type: InteractionType) => {
+    setInteractionType(type);
+    setShowCreateInteraction(true);
   };
 
   const handleCloseOffcanvas = () => {
     setSelectedLead(null);
     setShowOffcanvas(false);
   };
+
+  // --- Change Lead Status ---
+  const handleChangeLeadStatus = (leadId: number | undefined) => {
+    if (!leadId) return;
+    setLeadId(leadId);
+
+    const currentLead = leads.find((l) => l.id === leadId);
+    if (currentLead) {
+      setNewStatus(currentLead.status as LeadStatus);
+    }
+
+    setShowEditModal(true);
+  };
+
+  const handleSubmitStatus = async () => {
+    if (!leadId || !newStatus) return;
+
+    try {
+      await leadService.updateLead(leadId, { status: newStatus });
+
+      // ✅ Update leads state directly
+      setLeads((prevLeads) =>
+        prevLeads.map((lead) =>
+          lead.id === leadId ? { ...lead, status: newStatus } : lead
+        )
+      );
+
+      // ✅ Update selectedLead if it's the one being edited
+      if (selectedLead && selectedLead.id === leadId) {
+        setSelectedLead({ ...selectedLead, status: newStatus });
+      }
+
+      setShowEditModal(false);
+    } catch (err) {
+      console.error("Failed to update lead status", err);
+    }
+  };
+
   return (
     <Container fluid className="p-6">
       <PageHeading heading="Lead Management" />
@@ -230,34 +276,110 @@ export default function UserPage() {
         onClose={() => setShowCreate(false)}
         onSuccess={fetchLeads}
       />
+
+      <LeadInteractionCreateModal
+        show={showCreateInteraction}
+        onClose={() => setShowCreateInteraction(false)}
+        onSuccess={handleInteractionCreated}
+        leadId={selectedLeadId}
+        type={interActionType ?? InteractionType.CALL}
+      />
+
       <Offcanvas
         show={showOffcanvas}
         onHide={handleCloseOffcanvas}
         placement="end"
       >
-        <Offcanvas.Header closeButton>
+        <Offcanvas.Header closeButton className="align-items-start">
           <Offcanvas.Title>
             <h3>
               {selectedLead?.firstName} {selectedLead?.lastName}
             </h3>
             <h6>{selectedLead?.email}</h6>
             <h6>{selectedLead?.phoneNumber}</h6>
-            <p>
+            <p className="d-flex align-items-center gap-2">
               <Badge>{selectedLead?.status}</Badge>
+              <PencilSquare
+                onClick={() => handleChangeLeadStatus(selectedLead?.id)}
+                size={18}
+                className="text-success"
+                role="button"
+                style={{ cursor: "pointer" }}
+              />
             </p>
 
             <ButtonGroup size="sm">
-              <Button>Meeting</Button>
-              <Button>Call</Button>
-              <Button>Follow up</Button>
-              <Button>Email</Button>
+              <Button
+                onClick={() => {
+                  handleShowCreateInteraction(InteractionType.MEETING);
+                }}
+              >
+                Meeting
+              </Button>
+              <Button
+                onClick={() => {
+                  handleShowCreateInteraction(InteractionType.CALL);
+                }}
+              >
+                Call
+              </Button>
+              <Button
+                onClick={() => {
+                  handleShowCreateInteraction(InteractionType.FOLLOW_UP);
+                }}
+              >
+                Follow up
+              </Button>
+              <Button
+                onClick={() => {
+                  handleShowCreateInteraction(InteractionType.EMAIL);
+                }}
+              >
+                Email
+              </Button>
             </ButtonGroup>
           </Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
-          {selectedLead && <LeadInteraction lead={selectedLead} />}
+          {selectedLead && (
+            <LeadInteraction
+              lead={selectedLead}
+              refreshKey={refreshInteractionsFlag}
+            />
+          )}
         </Offcanvas.Body>
       </Offcanvas>
+
+      {/* --- Status Modal --- */}
+      <Modal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Change Status</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Select
+            value={newStatus}
+            onChange={(e) => setNewStatus(e.target.value as LeadStatus)}
+          >
+            <option value={LeadStatus.INPROGRESS}>
+              {LeadStatus.INPROGRESS}
+            </option>
+            <option value={LeadStatus.CONVERTED}>{LeadStatus.CONVERTED}</option>
+            <option value={LeadStatus.DROPPED}>{LeadStatus.DROPPED}</option>
+          </Form.Select>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSubmitStatus}>
+            Submit
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }

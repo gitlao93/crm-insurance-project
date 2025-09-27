@@ -47,6 +47,34 @@ export interface CreateLeadRequest {
   status: LeadStatus;
 }
 
+export interface LeadInteraction {
+  id: number;
+  leadId: number;
+  agentId: number;
+  type: InteractionType;
+  status: InteractionStatus;
+  description: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  dueDate: Date;
+  lead?: Lead;
+  agent?: User;
+}
+
+export interface CreateLeadInteractionRequest {
+  leadId: number;
+  agentId: number;
+  type: InteractionType;
+  description: string;
+  notes?: string;
+  dueDate: Date;
+  status: InteractionStatus;
+}
+
+export type UpdateLeadInteractionRequest =
+  Partial<CreateLeadInteractionRequest>;
+
 export type UpdateLeadRequest = Partial<CreateLeadRequest>;
 
 export const leadService = {
@@ -87,10 +115,51 @@ export const leadService = {
     await api.delete(`/leads/${id}`);
   },
 
-  async getLeadInteractions(leadId?: number): Promise<string[]> {
-    const { data } = await api.get<string[]>(`/lead-interactions`, {
+  async getLeadInteractions(leadId?: number) {
+    const { data } = await api.get(`/lead-interactions`, {
       params: { leadId }, // axios will handle encoding
     });
     return data;
+  },
+};
+
+export const leadInteractionService = {
+  // ✅ Create a new interaction
+  async createInteraction(
+    payload: CreateLeadInteractionRequest
+  ): Promise<LeadInteraction> {
+    const { data } = await api.post<LeadInteraction>(
+      "/lead-interactions",
+      payload
+    );
+    return data;
+  },
+
+  // ✅ Get all interactions (optionally filter by leadId)
+  async getInteractions(leadId?: number): Promise<LeadInteraction[]> {
+    const { data } = await api.get<LeadInteraction[]>("/lead-interactions", {
+      params: leadId ? { leadId } : {},
+    });
+    return data;
+  },
+
+  // ✅ Get single interaction by ID
+  async getInteraction(id: number): Promise<LeadInteraction> {
+    const { data } = await api.get<LeadInteraction>(`/lead-interactions/${id}`);
+    return data;
+  },
+
+  // ✅ Update an interaction
+  async updateInteraction(
+    id: number,
+    payload: UpdateLeadInteractionRequest
+  ): Promise<LeadInteraction> {
+    const { data } = await api.patch(`/lead-interactions/${id}`, payload);
+    return data;
+  },
+
+  // ✅ Delete an interaction
+  async deleteInteraction(id: number): Promise<void> {
+    await api.delete(`/lead-interactions/${id}`);
   },
 };
