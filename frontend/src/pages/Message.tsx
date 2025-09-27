@@ -291,17 +291,20 @@ export default function Message() {
                           <h5>{channel.name}</h5>
                         </Col>
                         <Col md={2}>
-                          {" "}
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
+                          <Trash
                             onClick={(e) => {
                               e.stopPropagation(); // prevent selecting channel when clicking delete
                               handleDeleteChannel(channel.id);
                             }}
-                          >
-                            <Trash size={16} />
-                          </Button>
+                            size={16}
+                            style={{ cursor: "pointer", color: "gray" }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "red")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color = "gray")
+                            }
+                          />
                         </Col>
                       </Row>
                     </ListGroup.Item>
@@ -454,15 +457,20 @@ export default function Message() {
                             {member.user.firstName} {member.user.lastName} (
                             {member.role})
                           </span>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
+
+                          <Trash
                             onClick={() =>
                               handleDeleteMember(activeChat.id, member.id)
                             }
-                          >
-                            <Trash size={16} />
-                          </Button>
+                            size={16}
+                            style={{ cursor: "pointer", color: "gray" }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "red")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color = "gray")
+                            }
+                          />
                         </ListGroup.Item>
                       ))}
                   </ListGroup>
