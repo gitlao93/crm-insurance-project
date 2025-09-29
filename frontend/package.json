@@ -24,6 +24,7 @@
     "react-router-dom": "^7.9.1",
     "simplebar": "^6.3.2",
     "simplebar-react": "^3.3.2",
+    "socket.io-client": "^4.8.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
