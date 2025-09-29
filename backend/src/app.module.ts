@@ -27,7 +27,8 @@ import { AuthModule } from './auth/auth.module';
       host: 'localhost',
       port: 3306,
       username: 'root',
-      database: 'crm_insurance_project_db',
+      password: '',
+      database: 'crm_db',
       entities: [
         User,
         Agency,

@@ -5,10 +5,9 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
-  BeforeInsert,
 } from 'typeorm';
 import { Agency } from 'src/agency/agency.entities';
-import * as bcrypt from 'bcrypt';
+
 import { LeadInteraction } from 'src/lead-interaction/lead-interaction.entities';
 
 export enum UserRole {
@@ -35,13 +34,13 @@ export class User {
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
-  @BeforeInsert()
-  async setDefaultPassword() {
-    if (!this.password) {
-      this.password = 'password123';
-    }
-    this.password = await bcrypt.hash(this.password, 10);
-  }
+  // @BeforeInsert()
+  // async setDefaultPassword() {
+  //   if (!this.password) {
+  //     this.password = 'password123';
+  //   }
+  //   this.password = await bcrypt.hash(this.password, 10);
+  // }
 
   @Column({ type: 'varchar', length: 20 })
   phoneNumber: string;
