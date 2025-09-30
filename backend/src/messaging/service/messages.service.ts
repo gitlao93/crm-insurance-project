@@ -2,7 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from '../entities/message.entity';
-import { CreateMessageDto, UpdateMessageDto } from '../dto/message.dto';
+import {
+  CreateMessageDto,
+  MessageResponseDto,
+  UpdateMessageDto,
+} from '../dto/message.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class MessagesService {
@@ -11,9 +16,30 @@ export class MessagesService {
     private readonly messageRepo: Repository<Message>,
   ) {}
 
-  async create(dto: CreateMessageDto): Promise<Message> {
+  async create(
+    dto: CreateMessageDto & { channelId: number },
+  ): Promise<MessageResponseDto> {
     const message = this.messageRepo.create(dto);
-    return this.messageRepo.save(message);
+    const saved = await this.messageRepo.save(message);
+
+    // reload with relations
+    const fullMessage = await this.messageRepo.findOne({
+      where: { id: saved.id },
+      relations: ['sender', 'channel'],
+    });
+
+    if (!fullMessage) {
+      throw new Error('Message not found after save');
+    }
+
+    return plainToInstance(
+      MessageResponseDto,
+      {
+        ...fullMessage,
+        channelId: fullMessage.channel.id,
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   async findAll(channelId: number): Promise<Message[]> {

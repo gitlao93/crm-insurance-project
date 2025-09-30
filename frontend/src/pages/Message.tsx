@@ -11,7 +11,7 @@ import {
   Tab,
 } from "react-bootstrap";
 import PageHeading from "../widgets/PageHeading";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { userService, type User } from "../services/userService";
 import {
   channelMembersService,
@@ -24,6 +24,8 @@ import {
   messageService,
   type MessageResponseDto,
 } from "../services/messageServices";
+import { connectSocket, disconnectSocket } from "../services/socketService";
+// import { Socket } from "socket.io-client";
 
 export interface ActiveChat {
   type: "channel" | "user";
@@ -218,15 +220,63 @@ export default function Message() {
         senderId: userObj.id,
         content: newMessage,
       };
-      await messageService.create(activeChat.id, payload);
+      const response = await messageService.create(activeChat.id, payload);
+
+      const socket = connectSocket();
+      socket.emit("sendMessage", response);
+      setMessages((prev) => [...prev, response]);
 
       setNewMessage("");
-      await fetchMessages();
+      // await fetchMessages();
     } catch (err) {
       console.error("Failed to send message", err);
     }
   };
 
+  useEffect(() => {
+    const socket = connectSocket();
+
+    if (activeChat.id) {
+      // 👇 send channelId to the backend
+      socket.emit("joinChannel", {
+        channelId: activeChat.id + activeChat.name,
+      });
+
+      console.log("Joined channel:", activeChat.id);
+    }
+
+    // Listen for confirmation
+    socket.on("joinedChannel", (data) => {
+      console.log("Server response:", data);
+    });
+
+    socket.on("newMessage", (msg) => {
+      console.log("New message:", msg);
+      if (msg.channel.id === activeChat.id) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    });
+
+    return () => {
+      if (activeChat.id) {
+        socket.emit("leaveChannel", {
+          channelId: activeChat.id + activeChat.name,
+        });
+        console.log("Left channel:", activeChat.id);
+      }
+      disconnectSocket();
+    };
+  }, [activeChat.id, activeChat.name]);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const container = containerRef.current;
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages]);
   return (
     <Container fluid className="p-6">
       <PageHeading heading="Message" />
@@ -317,7 +367,7 @@ export default function Message() {
               </ListGroup>
             )}
 
-            <h5>Users</h5>
+            {/* <h5>Users</h5>
             {loadingUsers ? (
               <div className="d-flex justify-content-center py-5">
                 <Spinner animation="border" role="status" />
@@ -352,12 +402,12 @@ export default function Message() {
                   </div>
                 )}
               </ListGroup>
-            )}
+            )} */}
           </Col>
 
           {/* Chat Area */}
 
-          <Col md={9} className="d-flex flex-column">
+          <Col md={9} className="d-flex flex-column overflow-auto">
             {/* Header */}
             <div className="border-bottom p-2 fw-bold d-flex justify-content-between align-items-center">
               <span>{activeChat.name}</span>
@@ -372,46 +422,64 @@ export default function Message() {
               )}
             </div>
 
-            <Row className="flex-grow-1 overflow-hidden">
+            <Row className="flex-grow-1">
               {/* Messages */}
               <Col md={9} className="d-flex flex-column">
-                <div className="flex-grow-1 p-3 overflow-auto">
+                <div
+                  ref={containerRef}
+                  className="flex-grow-1 p-3 overflow-y-scroll"
+                  style={{ maxHeight: "70vh" }}
+                >
                   {loadingMessages ? (
                     <div className="text-muted">Loading messages...</div>
                   ) : messages.length > 0 ? (
-                    messages.map((msg) => {
-                      const isMine = msg.sender.id === userObj.id;
-                      return (
-                        <div
-                          key={msg.id}
-                          className={`d-flex flex-column mb-3 ${
-                            isMine ? "align-items-end" : "align-items-start"
-                          }`}
-                        >
+                    <>
+                      {messages.map((msg) => {
+                        const isMine = msg.sender.id === userObj.id;
+                        return (
                           <div
-                            className="px-3 py-2"
-                            style={{
-                              maxWidth: "70%",
-                              borderRadius: "16px",
-                              backgroundColor: isMine ? "#0d6efd" : "#e9ecef",
-                              color: isMine ? "white" : "black",
-                              wordBreak: "break-word",
-                            }}
+                            key={msg.id}
+                            className={`d-flex flex-column mb-3 ${
+                              isMine ? "align-items-end" : "align-items-start"
+                            }`}
                           >
-                            {msg.content}
-                          </div>
-                          {!isMine && (
-                            <div className="text-muted small mb-1 mx-2">
-                              {msg.sender.firstName} {msg.sender.lastName}
+                            <div
+                              className="px-3 py-2"
+                              style={{
+                                maxWidth: "70%",
+                                borderRadius: "16px",
+                                backgroundColor: isMine ? "#0d6efd" : "#e9ecef",
+                                color: isMine ? "white" : "black",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {msg.content}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })
+                            {!isMine && (
+                              <div className="text-muted small mb-1 mx-2">
+                                {msg.sender.firstName} {msg.sender.lastName}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {/* 👇 only one reference at the bottom */}
+                      <div ref={messagesEndRef} />
+                    </>
                   ) : activeChat.id === 0 ? (
-                    <div className="text-muted">No Channel/ User Selected</div>
+                    <div
+                      className="text-muted d-flex justify-content-center align-items-center"
+                      style={{ height: "50vh" }}
+                    >
+                      Select a Channel
+                    </div>
                   ) : (
-                    <div className="text-muted">No messages yet</div>
+                    <div
+                      className="text-muted d-flex justify-content-center align-items-center"
+                      style={{ height: "50vh" }}
+                    >
+                      No messages yet
+                    </div>
                   )}
                 </div>
 

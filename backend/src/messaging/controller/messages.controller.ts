@@ -9,7 +9,11 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { CreateMessageDto, UpdateMessageDto } from '../dto/message.dto';
+import {
+  CreateMessageDto,
+  MessageResponseDto,
+  UpdateMessageDto,
+} from '../dto/message.dto';
 import { Message } from '../entities/message.entity';
 import { MessagesService } from '../service/messages.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -23,7 +27,7 @@ export class MessagesController {
   async create(
     @Param('channelId', ParseIntPipe) channelId: number,
     @Body() dto: CreateMessageDto,
-  ): Promise<Message> {
+  ): Promise<MessageResponseDto> {
     return this.messageService.create({ ...dto, channelId });
   }
 
