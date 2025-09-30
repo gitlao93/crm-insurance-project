@@ -155,9 +155,6 @@ export default function UserPage() {
           </OverlayTrigger>
         </div>
       ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
     },
   ];
 
@@ -180,6 +177,7 @@ export default function UserPage() {
   // --- Change Lead Status ---
   const handleChangeLeadStatus = (leadId: number | undefined) => {
     if (!leadId) return;
+
     setLeadId(leadId);
 
     const currentLead = leads.find((l) => l.id === leadId);
@@ -194,6 +192,7 @@ export default function UserPage() {
     if (!leadId || !newStatus) return;
 
     try {
+      console.log("handleSubmitStatus", newStatus);
       await leadService.updateLead(leadId, { status: newStatus });
 
       // ✅ Update leads state directly

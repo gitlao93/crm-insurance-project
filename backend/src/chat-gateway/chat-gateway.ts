@@ -12,16 +12,16 @@ export class ChatGateway {
   @WebSocketServer() server: Server;
 
   handleConnection(client: Socket) {
-    // console.log('Client connected:', client.id);
+    console.log('Client connected:', client.id);
   }
 
   handleDisconnect(client: Socket) {
-    // console.log('Client disconnected:', client.id);
+    console.log('Client disconnected:', client.id);
   }
 
   @SubscribeMessage('sendMessage')
   handleMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    console.log('Message received:', data, 'from:', client.id);
+    console.log('Send Message received:', data, 'from:', client.id);
     client.broadcast.emit('newMessage', data);
   }
 
@@ -44,5 +44,14 @@ export class ChatGateway {
     await client.leave(`channel_${channelId}`);
     console.log(`Client ${client.id} left channel_${channelId}`);
     return { event: 'leftChannel', data: { channelId } };
+  }
+
+  @SubscribeMessage('notification')
+  handleNotificationMessage(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    console.log('Notification Message received:', data, 'from:', client.id);
+    client.broadcast.emit('notification', data);
   }
 }

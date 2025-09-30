@@ -224,6 +224,7 @@ export default function Message() {
 
       const socket = connectSocket();
       socket.emit("sendMessage", response);
+      socket.emit("notification", response);
       setMessages((prev) => [...prev, response]);
 
       setNewMessage("");
@@ -235,7 +236,7 @@ export default function Message() {
 
   useEffect(() => {
     const socket = connectSocket();
-
+    console.log("activeChatID", activeChat.id);
     if (activeChat.id) {
       // 👇 send channelId to the backend
       socket.emit("joinChannel", {
@@ -367,7 +368,7 @@ export default function Message() {
               </ListGroup>
             )}
 
-            {/* <h5>Users</h5>
+            <h5>Users</h5>
             {loadingUsers ? (
               <div className="d-flex justify-content-center py-5">
                 <Spinner animation="border" role="status" />
@@ -402,7 +403,7 @@ export default function Message() {
                   </div>
                 )}
               </ListGroup>
-            )} */}
+            )}
           </Col>
 
           {/* Chat Area */}

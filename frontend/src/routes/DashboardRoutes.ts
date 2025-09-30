@@ -30,35 +30,41 @@ export const DashboardMenu: DashboardMenuProps[] = [
     title: "Dashboard",
     icon: "home",
     link: "/dashboard",
+    roles: ["admin", "collection_supervisor", "agent"], // 👈 new
   },
   {
     id: uuid(),
     title: "User",
     icon: "user",
     link: "/user",
+    roles: ["admin"], // 👈 only admin can see
   },
   {
     id: uuid(),
     title: "Policy Category",
     icon: "file-text",
     link: "/policy-category",
+    roles: ["admin"],
   },
   {
     id: uuid(),
     title: "Policy Plan",
     icon: "list",
     link: "/policy-plan",
+    roles: ["admin"],
   },
   {
     id: uuid(),
     title: "Lead",
     icon: "book",
     link: "/lead",
+    roles: ["admin", "agent"], // 👈 admin & agent
   },
   {
     id: uuid(),
     title: "Message",
     icon: "slack",
     link: "/message",
+    roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
   },
 ];

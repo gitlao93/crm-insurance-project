@@ -30,6 +30,9 @@ interface MenuItem {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ showMenu, toggleMenu }) => {
+  const storedUser = localStorage.getItem("user") ?? "";
+  const userObj = storedUser ? JSON.parse(storedUser) : null;
+  const userRole = userObj?.role || "";
   const location = useLocation();
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const generateLink = (item: MenuItem) => {
@@ -51,6 +54,10 @@ const Sidebar: React.FC<SidebarProps> = ({ showMenu, toggleMenu }) => {
     );
   };
 
+  const filteredMenu = DashboardMenu.filter(
+    (menu) => !menu.roles || menu.roles.includes(userRole)
+  );
+
   return (
     <Fragment>
       <SimpleBar style={{ maxHeight: "100vh" }}>
@@ -65,10 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({ showMenu, toggleMenu }) => {
           as="ul"
           className="navbar-nav flex-column"
         >
-          {DashboardMenu.map(function (
-            menu: DashboardMenuProps,
-            index: number
-          ) {
+          {filteredMenu.map(function (menu: DashboardMenuProps, index: number) {
             if (menu.grouptitle) {
               return (
                 <Card bsPrefix="nav-item" key={menu.id}>

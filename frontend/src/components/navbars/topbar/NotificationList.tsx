@@ -1,19 +1,16 @@
 import SimpleBar from "simplebar-react";
-import { ListGroup, Row, Col } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { ListGroup } from "react-bootstrap";
 // import "simplebar/dist/simplebar.min.css";
 import type { NotificationProps } from "../../../types";
 
 interface NotificationListProps {
   notificationItems: NotificationProps[];
 }
-export const NotificationList: React.FC<NotificationListProps> = ({
-  notificationItems,
-}) => {
+export const NotificationList: React.FC<NotificationListProps> = () => {
   return (
     <SimpleBar style={{ maxHeight: "300px" }}>
       <ListGroup variant="flush">
-        {notificationItems.map(function (item, index) {
+        {/* {notificationItems.map(function (item, index) {
           return (
             <ListGroup.Item
               className={index === 0 ? "bg-light" : ""}
@@ -29,7 +26,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({
               </Row>
             </ListGroup.Item>
           );
-        })}
+        })} */}
       </ListGroup>
     </SimpleBar>
   );

@@ -24,6 +24,7 @@ export interface DashboardMenuProps {
   icon?: string;
   badge?: string;
   badgecolor?: string;
+  roles: string[];
 }
 
 export interface CustomToggleProps {

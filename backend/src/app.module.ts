@@ -42,7 +42,7 @@ import { ChatGatewayModule } from './chat-gateway/chat-gateway.module';
         Message,
         MessageStatus,
       ],
-      synchronize: true,
+      synchronize: true, //in production change to false
       logging: false,
     }),
     UserModule,

@@ -1,5 +1,5 @@
 import { Button, Form, Modal } from "react-bootstrap";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   policyPlanService,
   type CreatePolicyPlanRequest,
@@ -22,10 +22,20 @@ export default function PolicyPlanCreateModal({
     categoryId: 0,
     planName: "",
     monthlyRate: 0,
-    currency: "",
+    currency: "PHP",
     coverageAmount: 0,
     status: "active",
   });
+
+  // ✅ Auto-select first category when modal opens or when categories change
+  useEffect(() => {
+    if (category.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        categoryId: category[0].id,
+      }));
+    }
+  }, [category, show]);
 
   const handleChange =
     (field: keyof CreatePolicyPlanRequest) =>
@@ -34,23 +44,36 @@ export default function PolicyPlanCreateModal({
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >
     ) => {
-      const value = e.target.value;
+      let value: string | number = e.target.value;
 
-      // Update form data
+      // ✅ Ensure numbers stay numbers
+      if (["categoryId", "monthlyRate", "coverageAmount"].includes(field)) {
+        value = Number(value);
+      }
+
       setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
   const handleSubmit = async () => {
     try {
       if (!formData) return;
-
+      console.log(formData);
       await policyPlanService.createPlan(formData);
+      setFormData({
+        categoryId: 0,
+        planName: "",
+        monthlyRate: 0,
+        currency: "PHP",
+        coverageAmount: 0,
+        status: "active",
+      });
       onSuccess();
       onClose();
     } catch (err) {
       console.error("Failed to create Plan", err);
     }
   };
+
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
@@ -61,13 +84,13 @@ export default function PolicyPlanCreateModal({
           <Form.Group className="mb-3">
             <Form.Label>Category</Form.Label>
             <Form.Select
-              name="supervisorId"
+              name="categoryId"
               value={formData.categoryId}
               onChange={handleChange("categoryId")}
             >
               {category.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.categoryName}
+                  {s.categoryName}: {s.id}
                 </option>
               ))}
             </Form.Select>
@@ -84,7 +107,7 @@ export default function PolicyPlanCreateModal({
           <Form.Group className="mb-3">
             <Form.Label>Monthly Rate</Form.Label>
             <Form.Control
-              type="text"
+              type="number"
               name="monthlyRate"
               value={formData.monthlyRate}
               onChange={handleChange("monthlyRate")}
@@ -93,7 +116,7 @@ export default function PolicyPlanCreateModal({
           <Form.Group className="mb-3">
             <Form.Label>Coverage Amount</Form.Label>
             <Form.Control
-              type="text"
+              type="number"
               name="coverageAmount"
               value={formData.coverageAmount}
               onChange={handleChange("coverageAmount")}

@@ -93,8 +93,9 @@ export default function LeadInteractionCreateModal({
         <Form>
           <Form.Group>
             <Form.Label>Set Date/Time</Form.Label>
+            <br />
             <DatePicker
-              className="form-control"
+              className="form-control mb-3"
               selected={formData.dueDate}
               onChange={handleDateChange("dueDate")}
               showTimeSelect // ✅ if you want date+time

@@ -1,8 +1,8 @@
 import { ListGroup, Dropdown, Image } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { NotificationList } from "./NotificationList";
 import type { NotificationProps } from "../../../types";
 import { useEffect, useState } from "react";
+import { NotificationList } from "./NotificationList";
 
 interface DesktopNotificationProps {
   data: NotificationProps[];
@@ -59,14 +59,10 @@ export const DesktopNotifications: React.FC<DesktopNotificationProps> = ({
           <Dropdown.Item className="mt-3" bsPrefix=" " as="div">
             <div className="border-bottom px-3 pt-0 pb-3 d-flex justify-content-between align-items-end">
               <span className="h4 mb-0">Notifications</span>
-              <Link to="/" className="text-muted">
-                <span className="align-middle">
-                  <i className="fe fe-settings me-1"></i>
-                </span>
-              </Link>
             </div>
 
             <NotificationList notificationItems={data} />
+
             <div className="border-top px-3 pt-3 pb-3">
               <Link
                 to="/dashboard/notification-history"
@@ -88,7 +84,7 @@ export const DesktopNotifications: React.FC<DesktopNotificationProps> = ({
           <div className="avatar avatar-md avatar-indicators avatar-online">
             <Image
               alt="avatar"
-              src="/images/avatar/avatar-1.jpg"
+              src="/images/brand/goodlife-logo.png"
               className="rounded-circle"
             />
           </div>

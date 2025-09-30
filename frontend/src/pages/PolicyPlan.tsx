@@ -142,9 +142,6 @@ export default function PolicyPlan() {
           </OverlayTrigger>
         </div>
       ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
     },
   ];
 

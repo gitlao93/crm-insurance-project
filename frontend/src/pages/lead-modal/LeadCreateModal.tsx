@@ -4,7 +4,11 @@ import {
   LeadStatus,
   type CreateLeadRequest,
 } from "../../services/leadServices";
-import { useState } from "react";
+import {
+  policyPlanService,
+  type PolicyPlan,
+} from "../../services/policyServices";
+import { useEffect, useState } from "react";
 
 interface LeadCreateModalProps {
   show: boolean;
@@ -18,6 +22,10 @@ export default function LeadCreateModal({
 }: LeadCreateModalProps) {
   const storedUser = localStorage.getItem("user") ?? "";
   const userObj = JSON.parse(storedUser);
+
+  const [plans, setPlans] = useState<PolicyPlan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+
   const [formData, setFormData] = useState<CreateLeadRequest>({
     firstName: "",
     lastName: "",
@@ -25,13 +33,38 @@ export default function LeadCreateModal({
     phoneNumber: "",
     agencyId: userObj.agencyId,
     agentId: userObj.id,
-    policyPlanId: 1,
+    policyPlanId: 0, // ✅ will be set after fetching
     status: LeadStatus.NEW,
   });
 
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateLeadRequest, string>>
   >({});
+
+  // ✅ Fetch plans when modal opens
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setLoadingPlans(true);
+        const res = await policyPlanService.getPlans();
+        setPlans(res);
+
+        if (res.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            policyPlanId: res[0].id, // ✅ default to first plan
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch policy plans", err);
+        setPlans([]);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+
+    if (show) fetchPlans();
+  }, [show]);
 
   const handleChange =
     (field: keyof CreateLeadRequest) =>
@@ -40,9 +73,17 @@ export default function LeadCreateModal({
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >
     ) => {
-      const value = e.target.value;
+      let value: string | number = e.target.value;
 
-      // Update form data
+      // convert numbers
+      if (
+        field === "policyPlanId" ||
+        field === "agencyId" ||
+        field === "agentId"
+      ) {
+        value = Number(value);
+      }
+
       setFormData((prev) => ({ ...prev, [field]: value }));
 
       // Live validation
@@ -86,9 +127,10 @@ export default function LeadCreateModal({
       onSuccess();
       onClose();
     } catch (err) {
-      console.error("Failed to create user", err);
+      console.error("Failed to create lead", err);
     }
   };
+
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
@@ -96,6 +138,23 @@ export default function LeadCreateModal({
       </Modal.Header>
       <Modal.Body>
         <Form>
+          {/* ✅ Policy Plan Dropdown */}
+          <Form.Group className="mb-3">
+            <Form.Label>Policy Plan</Form.Label>
+            <Form.Select
+              name="policyPlanId"
+              value={formData.policyPlanId}
+              onChange={handleChange("policyPlanId")}
+              disabled={loadingPlans || plans.length === 0}
+            >
+              {plans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.planName} (ID: {p.id})
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
           <Form.Group className="mb-3">
             <Form.Label>First Name</Form.Label>
             <Form.Control
