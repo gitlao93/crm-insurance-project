@@ -20,6 +20,7 @@ import { MessageStatus } from './messaging/entities/message-status.entity';
 import { Channel } from './messaging/entities/channel.entity';
 import { AuthModule } from './auth/auth.module';
 import { ChatGatewayModule } from './chat-gateway/chat-gateway.module';
+import { DirectMessage } from './messaging/entities/direct-message.entity';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ChatGatewayModule } from './chat-gateway/chat-gateway.module';
         ChannelMember,
         Message,
         MessageStatus,
+        DirectMessage,
       ],
       synchronize: true, //in production change to false
       logging: false,

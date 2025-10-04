@@ -24,8 +24,11 @@ import {
   messageService,
   type MessageResponseDto,
 } from "../services/messageServices";
+import {
+  directMessageService,
+  type DirectMessageResponseDto,
+} from "../services/directMessageService";
 import { connectSocket, disconnectSocket } from "../services/socketService";
-// import { Socket } from "socket.io-client";
 
 export interface ActiveChat {
   type: "channel" | "user";
@@ -52,28 +55,25 @@ export default function Message() {
 
   const [newMessage, setNewMessage] = useState("");
   const [openCreateChannelModal, setOpenCreateChannelModal] = useState(false);
-
-  // 🆕 state for create channel modal
   const [createChannelName, setCreateChannelName] = useState("");
   const [creatingChannel, setCreatingChannel] = useState(false);
 
-  // 🆕 state for add member modal
   const [openAddMemberModal, setOpenAddMemberModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [addingMember, setAddingMember] = useState(false);
   const [memberRole, setMemberRole] = useState<"member" | "admin">("member");
 
+  // Load Channels
   const fetchChannel = useCallback(async () => {
     try {
       setLoadingChannels(true);
       const agencyId = userObj?.agencyId;
       const userId = userObj?.id;
-      if (!agencyId) throw new Error("No agency info");
-      if (!userId) throw new Error("No user info");
+      if (!agencyId || !userId) throw new Error("Missing user info");
 
       const response = await channelService.findAll(userId, agencyId);
       setChannels(response);
-      // refresh activeChat members if updated
+
       if (activeChat.type === "channel") {
         const updated = response.find((c) => c.id === activeChat.id);
         if (updated) {
@@ -91,6 +91,7 @@ export default function Message() {
     }
   }, [userObj?.agencyId, userObj?.id, activeChat.id, activeChat.type]);
 
+  // Load Users
   const fetchUsers = useCallback(async () => {
     try {
       setLoadingUsers(true);
@@ -112,6 +113,7 @@ export default function Message() {
     fetchUsers();
   }, [fetchUsers, fetchChannel]);
 
+  // Create Channel
   const handleCloseCreateModal = () => {
     setOpenCreateChannelModal(false);
     setCreateChannelName("");
@@ -120,7 +122,6 @@ export default function Message() {
   const handleSubmitCreateModal = async () => {
     try {
       if (!createChannelName.trim()) return;
-
       setCreatingChannel(true);
 
       const payload = {
@@ -130,9 +131,8 @@ export default function Message() {
       };
 
       await channelService.create(payload);
-
-      await fetchChannel(); // refresh list
-      handleCloseCreateModal(); // close modal
+      await fetchChannel();
+      handleCloseCreateModal();
     } catch (err) {
       console.error("Failed to create channel", err);
     } finally {
@@ -140,18 +140,17 @@ export default function Message() {
     }
   };
 
-  // 🆕 submit add member
+  // Add Member
   const handleSubmitAddMember = async () => {
     if (!selectedUserId || activeChat.type !== "channel") return;
     try {
       setAddingMember(true);
-
       await channelMembersService.add(activeChat.id, {
         userId: selectedUserId,
         role: memberRole,
       });
 
-      await fetchChannel(); // refresh members
+      await fetchChannel();
       setOpenAddMemberModal(false);
       setSelectedUserId(null);
     } catch (err) {
@@ -161,11 +160,12 @@ export default function Message() {
     }
   };
 
+  // Delete Channel or Member
   const handleDeleteChannel = async (channelId: number) => {
     if (!window.confirm("Are you sure you want to delete this channel?"))
       return;
     try {
-      await channelService.remove(channelId); // assumes channelService.remove exists
+      await channelService.remove(channelId);
       await fetchChannel();
       if (activeChat.type === "channel" && activeChat.id === channelId) {
         setActiveChat({ type: "channel", id: 0, name: "", members: [] });
@@ -178,96 +178,125 @@ export default function Message() {
   const handleDeleteMember = async (channelId: number, userId: number) => {
     if (!window.confirm("Are you sure you want to delete this member?")) return;
     try {
-      await channelMembersService.remove(channelId, userId); // assumes remove exists
+      await channelMembersService.remove(channelId, userId);
       await fetchChannel();
     } catch (err) {
       console.error("Failed to delete member", err);
     }
   };
 
-  const [messages, setMessages] = useState<MessageResponseDto[]>([]);
+  // Messages state (shared for both DM + Channels)
+  const [messages, setMessages] = useState<
+    (MessageResponseDto | DirectMessageResponseDto)[]
+  >([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
+  // Fetch Messages (both channel + DM)
   const fetchMessages = useCallback(async () => {
-    if (activeChat.type === "channel" && activeChat.id) {
-      try {
-        setLoadingMessages(true);
+    try {
+      setLoadingMessages(true);
+
+      if (activeChat.type === "channel" && activeChat.id) {
         const response = await messageService.findAllByChannel(activeChat.id);
         setMessages(response);
-      } catch (err) {
-        console.error("Failed to load messages", err);
+      } else if (activeChat.type === "user" && activeChat.id) {
+        const response = await directMessageService.getConversation(
+          userObj.id,
+          activeChat.id
+        );
+        setMessages(response);
+      } else {
         setMessages([]);
-      } finally {
-        setLoadingMessages(false);
       }
+    } catch (err) {
+      console.error("Failed to load messages", err);
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
     }
-  }, [activeChat.id, activeChat.type, setMessages]);
+  }, [activeChat.id, activeChat.type, userObj.id]);
 
   useEffect(() => {
-    if (activeChat.type === "channel" && activeChat.id) {
-      fetchMessages();
-    } else {
-      setMessages([]); // clear messages for user chat
-    }
+    if (activeChat.id) fetchMessages();
+    else setMessages([]);
   }, [activeChat, fetchMessages]);
 
+  // Send message (works for both DM + Channel)
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || activeChat.type !== "channel") return;
+    if (!newMessage.trim()) return;
 
     try {
-      const payload = {
-        channelId: activeChat.id,
-        senderId: userObj.id,
-        content: newMessage,
-      };
-      const response = await messageService.create(activeChat.id, payload);
+      let response;
+
+      if (activeChat.type === "channel") {
+        const payload = {
+          channelId: activeChat.id,
+          senderId: userObj.id,
+          content: newMessage,
+        };
+        response = await messageService.create(activeChat.id, payload);
+      } else if (activeChat.type === "user") {
+        const payload = {
+          senderId: userObj.id,
+          receiverId: activeChat.id,
+          content: newMessage,
+        };
+        response = await directMessageService.create(payload);
+      } else return;
 
       const socket = connectSocket();
       socket.emit("sendMessage", response);
       socket.emit("notification", response);
-      setMessages((prev) => [...prev, response]);
 
+      setMessages((prev) => [...prev, response]);
       setNewMessage("");
-      // await fetchMessages();
     } catch (err) {
       console.error("Failed to send message", err);
     }
   };
 
+  // Socket handling (works for DM + Channel)
   useEffect(() => {
     const socket = connectSocket();
-    console.log("activeChatID", activeChat.id);
-    if (activeChat.id) {
-      // 👇 send channelId to the backend
-      socket.emit("joinChannel", {
-        channelId: activeChat.id + activeChat.name,
-      });
 
-      console.log("Joined channel:", activeChat.id);
+    if (activeChat.id) {
+      if (activeChat.type === "channel") {
+        socket.emit("joinChannel", {
+          channelId: activeChat.id + activeChat.name,
+        });
+      } else if (activeChat.type === "user") {
+        const roomName = [userObj.id, activeChat.id].sort().join("-");
+        socket.emit("joinDM", { roomName });
+      }
     }
 
-    // Listen for confirmation
-    socket.on("joinedChannel", (data) => {
-      console.log("Server response:", data);
-    });
-
     socket.on("newMessage", (msg) => {
-      console.log("New message:", msg);
-      if (msg.channel.id === activeChat.id) {
+      if (activeChat.type === "channel" && msg.channel?.id === activeChat.id) {
+        setMessages((prev) => [...prev, msg]);
+      } else if (
+        activeChat.type === "user" &&
+        ((msg.sender?.id === userObj.id &&
+          msg.receiver?.id === activeChat.id) ||
+          (msg.sender?.id === activeChat.id && msg.receiver?.id === userObj.id))
+      ) {
         setMessages((prev) => [...prev, msg]);
       }
     });
 
     return () => {
       if (activeChat.id) {
-        socket.emit("leaveChannel", {
-          channelId: activeChat.id + activeChat.name,
-        });
-        console.log("Left channel:", activeChat.id);
+        if (activeChat.type === "channel") {
+          socket.emit("leaveChannel", {
+            channelId: activeChat.id + activeChat.name,
+          });
+        } else if (activeChat.type === "user") {
+          const roomName = [userObj.id, activeChat.id].sort().join("-");
+          socket.emit("leaveDM", { roomName });
+        }
       }
       disconnectSocket();
     };
-  }, [activeChat.id, activeChat.name]);
+  }, [activeChat.id, activeChat.name, activeChat.type, userObj.id]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -278,6 +307,7 @@ export default function Message() {
       container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     }
   }, [messages]);
+
   return (
     <Container fluid className="p-6">
       <PageHeading heading="Message" />
@@ -328,12 +358,12 @@ export default function Message() {
                         backgroundColor:
                           activeChat.type === "channel" &&
                           activeChat.id === channel.id
-                            ? "#d8d8d8ff" // light blue
+                            ? "#d8d8d8ff"
                             : "transparent",
                         borderColor:
                           activeChat.type === "channel" &&
                           activeChat.id === channel.id
-                            ? "#d8d8d8ff" // Bootstrap primary text color
+                            ? "#d8d8d8ff"
                             : "transparent",
                       }}
                     >
@@ -344,7 +374,7 @@ export default function Message() {
                         <Col md={2}>
                           <Trash
                             onClick={(e) => {
-                              e.stopPropagation(); // prevent selecting channel when clicking delete
+                              e.stopPropagation();
                               handleDeleteChannel(channel.id);
                             }}
                             size={16}
@@ -407,9 +437,7 @@ export default function Message() {
           </Col>
 
           {/* Chat Area */}
-
           <Col md={9} className="d-flex flex-column overflow-auto">
-            {/* Header */}
             <div className="border-bottom p-2 fw-bold d-flex justify-content-between align-items-center">
               <span>{activeChat.name}</span>
               {activeChat.type === "channel" && (
@@ -464,7 +492,6 @@ export default function Message() {
                           </div>
                         );
                       })}
-                      {/* 👇 only one reference at the bottom */}
                       <div ref={messagesEndRef} />
                     </>
                   ) : activeChat.id === 0 ? (
@@ -472,7 +499,7 @@ export default function Message() {
                       className="text-muted d-flex justify-content-center align-items-center"
                       style={{ height: "50vh" }}
                     >
-                      Select a Channel
+                      Select a Chat
                     </div>
                   ) : (
                     <div
@@ -526,7 +553,6 @@ export default function Message() {
                             {member.user.firstName} {member.user.lastName} (
                             {member.role})
                           </span>
-
                           <Trash
                             onClick={() =>
                               handleDeleteMember(activeChat.id, member.id)
@@ -586,14 +612,13 @@ export default function Message() {
         </Modal.Footer>
       </Modal>
 
-      {/* 🆕 Add Member Modal */}
+      {/* Add Member Modal */}
       <Modal
         show={openAddMemberModal}
         onHide={() => setOpenAddMemberModal(false)}
-        centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>Add Member to {activeChat.name}</Modal.Title>
+          <Modal.Title>Add Member</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -603,26 +628,20 @@ export default function Message() {
                 value={selectedUserId ?? ""}
                 onChange={(e) => setSelectedUserId(Number(e.target.value))}
               >
-                <option value="">-- Select a user --</option>
-                {users
-                  .filter(
-                    (u) => !activeChat.members?.some((m) => m.user.id === u.id) // exclude existing
-                  )
-                  .map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName} ({user.role})
-                    </option>
-                  ))}
+                <option value="">Select user...</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName}
+                  </option>
+                ))}
               </Form.Select>
             </Form.Group>
-            {/* ✅ Role selection dropdown */}
-            <Form.Group className="mb-3">
+
+            <Form.Group>
               <Form.Label>Role</Form.Label>
               <Form.Select
                 value={memberRole}
-                onChange={(e) =>
-                  setMemberRole(e.target.value as "member" | "admin")
-                }
+                onChange={(e) => setMemberRole(e.target.value as any)}
               >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
@@ -640,9 +659,9 @@ export default function Message() {
           <Button
             variant="primary"
             onClick={handleSubmitAddMember}
-            disabled={addingMember || !selectedUserId}
+            disabled={addingMember}
           >
-            {addingMember ? "Adding..." : "Add"}
+            {addingMember ? "Adding..." : "Add Member"}
           </Button>
         </Modal.Footer>
       </Modal>

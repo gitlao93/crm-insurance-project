@@ -13,28 +13,42 @@ import { ChannelsService } from './service/channels.service';
 import { MessagesService } from './service/messages.service';
 import { MessageStatusService } from './service/message-status.service';
 import { MessageStatusesController } from './controller/message-status.controller';
+import { DirectMessageService } from './service/direct-message.service';
+import { DirectMessageController } from './controller/direct-message.controller';
+import { DirectMessage } from './entities/direct-message.entity';
+import { User } from 'src/user/user.entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Channel, ChannelMember, Message, MessageStatus]),
+    TypeOrmModule.forFeature([
+      Channel,
+      ChannelMember,
+      Message,
+      MessageStatus,
+      DirectMessage,
+      User,
+    ]),
   ],
   controllers: [
     ChannelsController,
     MessagesController,
     ChannelMembersController,
     MessageStatusesController,
+    DirectMessageController,
   ],
   providers: [
     ChannelsService,
     MessagesService,
     ChannelMembersService,
     MessageStatusService,
+    DirectMessageService,
   ],
   exports: [
     ChannelsService,
     MessagesService,
     ChannelMembersService,
     MessageStatusService,
+    DirectMessageService,
   ],
 })
 export class MessagingModule {}
