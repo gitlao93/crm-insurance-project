@@ -55,6 +55,13 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
+    title: "Policy Holder",
+    icon: "users",
+    link: "/policy-holder",
+    roles: ["admin", "collection_supervisor", "agent"],
+  },
+  {
+    id: uuid(),
     title: "Lead",
     icon: "book",
     link: "/lead",

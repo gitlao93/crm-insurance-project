@@ -85,9 +85,9 @@ export const leadService = {
   },
 
   // ✅ Get all leads (optionally filter by agent/userId)
-  async getLeads(agencyId?: number): Promise<Lead[]> {
+  async getLeads(userId?: number): Promise<Lead[]> {
     const { data } = await api.get<Lead[]>("/leads", {
-      params: agencyId ? { agencyId } : {},
+      params: userId ? { userId } : {},
     });
     return data;
   },

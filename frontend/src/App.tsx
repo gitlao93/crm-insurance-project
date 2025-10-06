@@ -8,6 +8,7 @@ import User from "./pages/User";
 import Lead from "./pages/Lead";
 import PolicyCategory from "./pages/PolicyCategory";
 import PolicyPlan from "./pages/PolicyPlan";
+import PolicyHolder from "./pages/PolicyHolder";
 
 function App() {
   return (
@@ -44,6 +45,14 @@ function App() {
             element={
               <PrivateRoute>
                 <PolicyPlan />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="policy-holder"
+            element={
+              <PrivateRoute>
+                <PolicyHolder />
               </PrivateRoute>
             }
           />

@@ -55,9 +55,9 @@ export default function UserPage() {
   const fetchLeads = useCallback(async () => {
     try {
       setLoadingLeads(true);
-      const agencyId = userObj?.agencyId;
-      if (!agencyId) throw new Error("No agency info");
-      const response = await leadService.getLeads(agencyId);
+      const userId = userObj?.id;
+      if (!userId) throw new Error("No agency info");
+      const response = await leadService.getLeads(userId);
       setLeads(response);
     } catch (err) {
       console.error("Failed to fetch users", err);
@@ -65,7 +65,7 @@ export default function UserPage() {
     } finally {
       setLoadingLeads(false);
     }
-  }, [userObj?.agencyId]);
+  }, [userObj?.id]);
 
   const filteredLeads = leads.filter((u) => {
     const matchesSearch =
@@ -125,7 +125,7 @@ export default function UserPage() {
     },
     {
       name: "Policy Plan",
-      selector: (row) => row.policyPlan.planName ?? "",
+      selector: (row) => row.policyPlan.policyName ?? "",
     },
     {
       name: "Status",

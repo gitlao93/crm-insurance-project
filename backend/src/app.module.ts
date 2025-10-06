@@ -21,6 +21,8 @@ import { Channel } from './messaging/entities/channel.entity';
 import { AuthModule } from './auth/auth.module';
 import { ChatGatewayModule } from './chat-gateway/chat-gateway.module';
 import { DirectMessage } from './messaging/entities/direct-message.entity';
+import { PolicyHolderModule } from './policy-holder/policy-holder.module';
+import { PolicyHolder } from './policy-holder/policy-holder.entities';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { DirectMessage } from './messaging/entities/direct-message.entity';
         Message,
         MessageStatus,
         DirectMessage,
+        PolicyHolder,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -57,6 +60,7 @@ import { DirectMessage } from './messaging/entities/direct-message.entity';
     MessagingModule,
     AuthModule,
     ChatGatewayModule,
+    PolicyHolderModule,
   ],
   controllers: [],
   providers: [],
