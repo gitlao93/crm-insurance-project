@@ -1,6 +1,22 @@
 import api from "./api";
 
 // ========== Types ==========
+export enum PolicyStatus {
+  ACTIVE = "Active",
+  RETIRED = "Retired",
+}
+
+export enum PolicyType {
+  LIFE = "Life Plan",
+  BURIAL = "Burial Plan",
+}
+
+export enum PolicyTerm {
+  MONTHLY = "Monthly",
+  QUARTERLY = "Quarterly",
+  ANNUALLY = "Annually",
+}
+
 export interface PolicyCategory {
   id: number;
   categoryName: string;
@@ -10,33 +26,41 @@ export interface PolicyCategory {
 
 export interface PolicyPlan {
   id: number;
+  policyName: string;
+  policyType: PolicyType;
+  term: PolicyTerm;
+  duration: number;
+  commition_rate: number;
+  premium: number;
+  status: "active" | "inactive" | string;
   categoryId: number;
-  planName: string;
-  monthlyRate: number;
-  currency: string;
-  coverageAmount: number;
-  status: "active" | "inactive";
   category?: PolicyCategory;
   createdAt?: string;
   updatedAt?: string;
 }
 
+// ========== Requests ==========
+
 export interface CreatePolicyCategoryRequest {
   categoryName: string;
   description?: string;
-  agencyId: number; // Optional agencyId for associating category with an agency
+  agencyId: number;
 }
 
 export interface CreatePolicyPlanRequest {
+  policyName: string;
+  policyType: PolicyType;
+  term: PolicyTerm;
+  duration: number;
+  commition_rate: number;
+  premium: number;
+  status: "Active" | "Retired";
   categoryId: number;
-  planName: string;
-  monthlyRate: number;
-  currency: string;
-  coverageAmount: number;
-  status?: "active" | "inactive";
 }
 
 export type UpdatePolicyPlanRequest = Partial<CreatePolicyPlanRequest>;
+
+// ========== Services ==========
 
 export const policyCategoryService = {
   // ✅ Create a new category
@@ -47,7 +71,7 @@ export const policyCategoryService = {
     return res.data;
   },
 
-  // ✅ Get all categories (optionally filter by agencyId)
+  // ✅ Get all categories (optionally filtered by agencyId)
   async getCategories(agencyId?: number): Promise<PolicyCategory[]> {
     const res = await api.get<PolicyCategory[]>("/policy-categories", {
       params: agencyId ? { agencyId } : {},
@@ -77,34 +101,37 @@ export const policyCategoryService = {
   async deleteCategory(id: number): Promise<void> {
     await api.delete(`/policy-categories/${id}`);
   },
-
-  // (Optional) if you later extend with plans directly under categories
-  async createPlan(data: CreatePolicyPlanRequest): Promise<PolicyPlan> {
-    const res = await api.post<PolicyPlan>("/policy-plans", data);
-    return res.data;
-  },
 };
 
 export const policyPlanService = {
-  async createPlan(dto: CreatePolicyPlanRequest) {
+  // ✅ Create a plan
+  async createPlan(dto: CreatePolicyPlanRequest): Promise<PolicyPlan> {
     const { data } = await api.post<PolicyPlan>("/policy-plans", dto);
     return data;
   },
-  async getPlans(categoryId?: number) {
+
+  // ✅ Get all plans (optionally by categoryId)
+  async getPlans(categoryId?: number): Promise<PolicyPlan[]> {
     const { data } = await api.get<PolicyPlan[]>("/policy-plans", {
       params: categoryId ? { categoryId } : {},
     });
     return data;
   },
-  async getPlanById(id: number) {
+
+  // ✅ Get a single plan
+  async getPlanById(id: number): Promise<PolicyPlan> {
     const { data } = await api.get<PolicyPlan>(`/policy-plans/${id}`);
     return data;
   },
-  async updatePlan(id: number, dto: UpdatePolicyPlanRequest) {
+
+  // ✅ Update a plan
+  async updatePlan(id: number, dto: Partial<PolicyPlan>): Promise<PolicyPlan> {
     const { data } = await api.patch<PolicyPlan>(`/policy-plans/${id}`, dto);
     return data;
   },
-  async deletePlan(id: number) {
+
+  // ✅ Delete a plan
+  async deletePlan(id: number): Promise<void> {
     await api.delete(`/policy-plans/${id}`);
   },
 };

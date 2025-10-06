@@ -40,7 +40,7 @@ function App() {
             }
           />
           <Route
-            path="policy-plan"
+            path="policy-catalog"
             element={
               <PrivateRoute>
                 <PolicyPlan />

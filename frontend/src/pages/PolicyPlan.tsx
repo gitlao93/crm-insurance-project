@@ -65,7 +65,7 @@ export default function PolicyPlan() {
   }, [userObj?.agencyId]);
 
   const filteredCategory = plan.filter((u) => {
-    const matchesSearch = u.planName
+    const matchesSearch = u.policyName
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchesCategory = categoryFilter
@@ -100,21 +100,33 @@ export default function PolicyPlan() {
       sortable: true,
     },
     {
-      name: "Plan Name",
-      selector: (row) => row.planName,
+      name: "Policy Name",
+      selector: (row) => row.policyName,
       sortable: true,
     },
     {
-      name: "Monthly Rate",
-      selector: (row) => row.monthlyRate,
+      name: "Policy Type",
+      selector: (row) => row.policyType,
     },
     {
-      name: "Currency",
-      selector: (row) => row.currency,
+      name: "Premium",
+      selector: (row) => row.premium,
     },
     {
-      name: "Coverage Amount",
-      selector: (row) => row.coverageAmount,
+      name: "Term",
+      selector: (row) => row.term,
+    },
+    {
+      name: "Duration(Years)",
+      selector: (row) => row.duration + " " + "yrs",
+    },
+    {
+      name: "Commition(%)",
+      selector: (row) => row.duration + " " + "%",
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
     },
     {
       name: "Actions",
@@ -123,9 +135,7 @@ export default function PolicyPlan() {
           <OverlayTrigger
             placement="top"
             overlay={
-              <Tooltip id={`tooltip-edit-${row.id}`}>
-                Edit Plan Category
-              </Tooltip>
+              <Tooltip id={`tooltip-edit-${row.id}`}>Edit Plan Catalog</Tooltip>
             }
           >
             <span
@@ -151,7 +161,7 @@ export default function PolicyPlan() {
   };
   return (
     <Container fluid className="p-6">
-      <PageHeading heading="Policy Plan Management" />
+      <PageHeading heading="Policy Catalog Management" />
       <Card className="mb-4">
         <Card.Body>
           <Row className="mb-4">
@@ -183,7 +193,7 @@ export default function PolicyPlan() {
                 onClick={() => setShowCreate(true)}
                 variant="outline-primary"
               >
-                Add Category
+                Add New Policy
               </Button>
             </Col>
           </Row>

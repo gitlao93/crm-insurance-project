@@ -2,6 +2,8 @@ import { Button, Form, Modal } from "react-bootstrap";
 import { useEffect, useState } from "react";
 import {
   policyPlanService,
+  PolicyTerm,
+  PolicyType,
   type CreatePolicyPlanRequest,
   type PolicyCategory,
 } from "../../services/policyServices";
@@ -19,12 +21,14 @@ export default function PolicyPlanCreateModal({
   category,
 }: PolicyPlanCreateModalProps) {
   const [formData, setFormData] = useState<CreatePolicyPlanRequest>({
+    policyName: "",
+    policyType: PolicyType.LIFE,
+    term: PolicyTerm.MONTHLY,
+    duration: 1,
+    commition_rate: 0,
+    premium: 0,
+    status: "Active",
     categoryId: 0,
-    planName: "",
-    monthlyRate: 0,
-    currency: "PHP",
-    coverageAmount: 0,
-    status: "active",
   });
 
   // ✅ Auto-select first category when modal opens or when categories change
@@ -60,12 +64,14 @@ export default function PolicyPlanCreateModal({
       console.log(formData);
       await policyPlanService.createPlan(formData);
       setFormData({
+        policyName: "",
+        policyType: PolicyType.LIFE,
+        term: PolicyTerm.MONTHLY,
+        duration: 1,
+        commition_rate: 0,
+        premium: 0,
+        status: "Active",
         categoryId: 0,
-        planName: "",
-        monthlyRate: 0,
-        currency: "PHP",
-        coverageAmount: 0,
-        status: "active",
       });
       onSuccess();
       onClose();
@@ -88,9 +94,10 @@ export default function PolicyPlanCreateModal({
               value={formData.categoryId}
               onChange={handleChange("categoryId")}
             >
+              <option value="">Select Category</option>
               {category.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.categoryName}: {s.id}
+                  {s.categoryName}
                 </option>
               ))}
             </Form.Select>
@@ -99,40 +106,63 @@ export default function PolicyPlanCreateModal({
             <Form.Label>Plan Name</Form.Label>
             <Form.Control
               type="text"
-              name="planName"
-              value={formData.planName}
-              onChange={handleChange("planName")}
+              name="policyName"
+              value={formData.policyName}
+              onChange={handleChange("policyName")}
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Monthly Rate</Form.Label>
-            <Form.Control
-              type="number"
-              name="monthlyRate"
-              value={formData.monthlyRate}
-              onChange={handleChange("monthlyRate")}
-            />
+            <Form.Label>Policy Type</Form.Label>
+            <Form.Select
+              name="policyType"
+              value={formData.policyType}
+              onChange={handleChange("policyType")}
+            >
+              <option value={PolicyType.LIFE}>{PolicyType.LIFE}</option>
+              <option value={PolicyType.BURIAL}>{PolicyType.BURIAL}</option>
+            </Form.Select>
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Coverage Amount</Form.Label>
-            <Form.Control
-              type="number"
-              name="coverageAmount"
-              value={formData.coverageAmount}
-              onChange={handleChange("coverageAmount")}
-            />
+            <Form.Label>Term</Form.Label>
+            <Form.Select
+              name="term"
+              value={formData.term}
+              onChange={handleChange("term")}
+            >
+              <option value={PolicyTerm.MONTHLY}>{PolicyTerm.MONTHLY}</option>
+              <option value={PolicyTerm.QUARTERLY}>
+                {PolicyTerm.QUARTERLY}
+              </option>
+              <option value={PolicyTerm.ANNUALLY}>{PolicyTerm.ANNUALLY}</option>
+            </Form.Select>
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Currency</Form.Label>
-            <Form.Select
-              name="currency"
-              value={formData.currency}
-              onChange={handleChange("currency")}
-            >
-              <option value="PHP">PHP</option>
-              <option value="USD">USD</option>
-            </Form.Select>
+            <Form.Label>Premium</Form.Label>
+            <Form.Control
+              type="number"
+              name="coverageAmount"
+              value={formData.premium}
+              onChange={handleChange("premium")}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Duration(Years)</Form.Label>
+            <Form.Control
+              type="number"
+              name="duration"
+              value={formData.duration}
+              onChange={handleChange("duration")}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Commition Rate(%)</Form.Label>
+            <Form.Control
+              type="number"
+              name="commition_rate"
+              value={formData.commition_rate}
+              onChange={handleChange("commition_rate")}
+            />
           </Form.Group>
         </Form>
       </Modal.Body>
