@@ -25,6 +25,7 @@ import { PolicyHolderModule } from './policy-holder/policy-holder.module';
 import { PolicyHolder } from './policy-holder/policy-holder.entities';
 import { PolicyDependentModule } from './policy-dependent/policy-dependent.module';
 import { PolicyDependent } from './policy-dependent/policy-dependent.entities';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { PolicyDependent } from './policy-dependent/policy-dependent.entities';
     ChatGatewayModule,
     PolicyHolderModule,
     PolicyDependentModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
