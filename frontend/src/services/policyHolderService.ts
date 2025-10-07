@@ -1,0 +1,94 @@
+import api from "./api";
+import type { PolicyPlan } from "./policyServices";
+import type { User } from "./userService";
+
+// ==========================
+// 📘 Types
+// ==========================
+
+// Optional enum for status (you can adjust based on your backend schema)
+export enum PolicyHolderStatus {
+  ACTIVE = "Active",
+  RENEWALDUE = "Renewal Due",
+  LAPSABLE = "Lapsable",
+  LAPSED = "Lapsed",
+  CANCELLED = "Cancelled",
+}
+
+// Represents a single Policy Holder record
+export interface PolicyHolder {
+  id: number;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email?: string;
+  policyPlanId: number;
+  agentId?: number;
+  agencyId?: number;
+  status: PolicyHolderStatus;
+  createdAt?: string;
+  updatedAt?: string;
+  StartDate?: string;
+  EndDate?: string;
+  // Optional relations
+  policyPlan: PolicyPlan;
+  agent: User;
+  leadId?: number | null;
+}
+
+// Create DTO
+export interface CreatePolicyHolderRequest {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  policyPlanId: number;
+  agentId: number;
+  agencyId: number;
+  StartDate?: string;
+  EndDate?: string;
+  status: PolicyHolderStatus;
+  leadId?: number | null;
+}
+
+// Update DTO
+export type UpdatePolicyHolderRequest = Partial<CreatePolicyHolderRequest>;
+
+// ==========================
+// ⚙️ Service
+// ==========================
+export const policyHolderService = {
+  // ✅ Create Policy Holder
+  async create(data: CreatePolicyHolderRequest): Promise<PolicyHolder> {
+    const res = await api.post<PolicyHolder>("/policy-holders", data);
+    return res.data;
+  },
+
+  // ✅ Get All Policy Holders (optionally filter by userId)
+  async getAll(userId?: number): Promise<PolicyHolder[]> {
+    const res = await api.get<PolicyHolder[]>("/policy-holders", {
+      params: userId ? { userId } : {},
+    });
+    return res.data;
+  },
+
+  // ✅ Get Single Policy Holder by ID
+  async getById(id: number): Promise<PolicyHolder> {
+    const res = await api.get<PolicyHolder>(`/policy-holders/${id}`);
+    return res.data;
+  },
+
+  // ✅ Update Policy Holder
+  async update(
+    id: number,
+    data: UpdatePolicyHolderRequest
+  ): Promise<PolicyHolder> {
+    const res = await api.patch<PolicyHolder>(`/policy-holders/${id}`, data);
+    return res.data;
+  },
+
+  // ✅ Delete Policy Holder
+  async remove(id: number): Promise<void> {
+    await api.delete(`/policy-holders/${id}`);
+  },
+};

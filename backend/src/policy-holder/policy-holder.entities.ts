@@ -1,5 +1,5 @@
-import { LeadInteraction } from 'src/lead-interaction/lead-interaction.entities';
-import { PolicyHolder } from 'src/policy-holder/policy-holder.entities';
+import { Lead } from 'src/lead/lead.entities';
+import { PolicyDependent } from 'src/policy-dependent/policy-dependent.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
 import { User } from 'src/user/user.entities';
 import {
@@ -10,19 +10,20 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   JoinColumn,
-  OneToMany,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 
-export enum LeadStatus {
-  NEW = 'New',
-  IN_PROGRESS = 'In-Progress',
-  CONVERTED = 'Converted',
-  DROPPED = 'Dropped',
+export enum PolicyHolderStatus {
+  ACTIVE = 'Active',
+  RENEWALDUE = 'Renewal Due',
+  LAPSABLE = 'Lapsable',
+  LAPSED = 'Lapsed',
+  CANCELLED = 'Cancelled',
 }
 
-@Entity('leads')
-export class Lead {
+@Entity('policy_holders')
+export class PolicyHolder {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -38,8 +39,12 @@ export class Lead {
   @Column({ type: 'varchar', nullable: true })
   phoneNumber: string;
 
-  @Column({ type: 'enum', enum: LeadStatus, default: LeadStatus.NEW })
-  status: LeadStatus;
+  @Column({
+    type: 'enum',
+    enum: PolicyHolderStatus,
+    default: PolicyHolderStatus.ACTIVE,
+  })
+  status: PolicyHolderStatus;
 
   @Column()
   agentId: number;
@@ -58,11 +63,21 @@ export class Lead {
   @JoinColumn({ name: 'policyPlanId' })
   policyPlan: PolicyPlan;
 
-  @OneToMany(() => LeadInteraction, (interaction) => interaction.lead)
-  interactions: LeadInteraction[];
+  @Column()
+  StartDate: Date;
 
-  @OneToOne(() => PolicyHolder, (policyHolder) => policyHolder.lead)
-  policyHolder: PolicyHolder;
+  @Column()
+  EndDate: Date;
+
+  @Column({ nullable: true })
+  leadId: number;
+
+  @OneToOne(() => Lead, (lead) => lead.policyHolder, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'leadId' })
+  lead: Lead;
+
+  @OneToMany(() => PolicyDependent, (dependent) => dependent.policyHolder)
+  dependents: PolicyDependent[];
 
   @CreateDateColumn()
   createdAt: Date;

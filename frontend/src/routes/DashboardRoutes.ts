@@ -48,10 +48,17 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
-    title: "Policy Plan",
+    title: "Policy Catalog",
     icon: "list",
-    link: "/policy-plan",
+    link: "/policy-catalog",
     roles: ["admin"],
+  },
+  {
+    id: uuid(),
+    title: "Policy Holder",
+    icon: "users",
+    link: "/policy-holder",
+    roles: ["admin", "collection_supervisor", "agent"],
   },
   {
     id: uuid(),
@@ -66,5 +73,12 @@ export const DashboardMenu: DashboardMenuProps[] = [
     icon: "slack",
     link: "/message",
     roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
+  },
+  {
+    id: uuid(),
+    title: "Setting",
+    icon: "settings",
+    link: "/setting",
+    roles: ["admin"],
   },
 ];

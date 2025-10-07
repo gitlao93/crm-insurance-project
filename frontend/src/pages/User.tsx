@@ -13,7 +13,7 @@ import PageHeading from "../widgets/PageHeading";
 import DataTable, { type TableColumn } from "react-data-table-component";
 import { useEffect, useState } from "react";
 import { userService, type User } from "../services/userService";
-import { PencilSquare, PersonX } from "react-bootstrap-icons";
+import { PencilSquare, PersonCheck, PersonX } from "react-bootstrap-icons";
 import UserCreateModal from "./user-modal/UserCreateModal";
 import UserEditModal from "./user-modal/UserEditModal";
 
@@ -24,6 +24,7 @@ export default function UserPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
+  const [activeRole, setActiveRole] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -51,7 +52,7 @@ export default function UserPage() {
   const filteredUsers = users.filter((u) => {
     const currentUserId = userObj.id;
     const isNotSelf = u.id !== currentUserId;
-    const isNotActive = u.isActive === false;
+    const isNotActive = u.isActive === !activeRole;
     const matchesSearch =
       u.firstName.toLowerCase().includes(search.toLowerCase()) ||
       u.lastName.toLowerCase().includes(search.toLowerCase()) ||
@@ -84,6 +85,18 @@ export default function UserPage() {
       } catch (err) {
         console.error("Failed to deactivate user", err);
         alert("Failed to deactivate user. Please try again.");
+      }
+    }
+  };
+
+  const handleAeactivate = async (userId: number) => {
+    if (window.confirm("Are you sure you want to Activate this user?")) {
+      try {
+        await userService.activateUser(userId);
+        fetchUsers();
+      } catch (err) {
+        console.error("Failed to Activate user", err);
+        alert("Failed to Activate user. Please try again.");
       }
     }
   };
@@ -139,25 +152,47 @@ export default function UserPage() {
               <PencilSquare size={18} className="text-primary" />
             </span>
           </OverlayTrigger>
-
-          <OverlayTrigger
-            placement="top"
-            overlay={
-              <Tooltip id={`tooltip-deactivate-${row.id}`}>Deactivate</Tooltip>
-            }
-          >
-            <span
-              role="button"
-              onClick={() => handleDeactivate(row.id)}
-              style={{
-                cursor: "pointer",
-                display: "inline-block",
-                lineHeight: 0,
-              }}
+          {row.isActive === true ? (
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id={`tooltip-deactivate-${row.id}`}>
+                  Deactivate
+                </Tooltip>
+              }
             >
-              <PersonX size={18} className="text-danger" />
-            </span>
-          </OverlayTrigger>
+              <span
+                role="button"
+                onClick={() => handleDeactivate(row.id)}
+                style={{
+                  cursor: "pointer",
+                  display: "inline-block",
+                  lineHeight: 0,
+                }}
+              >
+                <PersonX size={18} className="text-danger" />
+              </span>
+            </OverlayTrigger>
+          ) : (
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id={`tooltip-deactivate-${row.id}`}>Activate</Tooltip>
+              }
+            >
+              <span
+                role="button"
+                onClick={() => handleAeactivate(row.id)}
+                style={{
+                  cursor: "pointer",
+                  display: "inline-block",
+                  lineHeight: 0,
+                }}
+              >
+                <PersonCheck size={18} className="text-success" />
+              </span>
+            </OverlayTrigger>
+          )}
         </div>
       ),
       ignoreRowClick: true,
@@ -196,7 +231,22 @@ export default function UserPage() {
                 {/* <option value="super_admin">Super Admin</option> */}
               </Form.Select>
             </Col>
-            <Col md={5} className="d-grid d-md-flex justify-content-md-end">
+            <Col md={3}>
+              <Form.Select
+                value={roleFilter === null ? "" : String(roleFilter)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Convert string value to boolean or null
+                  if (value === "true") setActiveRole(true);
+                  else if (value === "false") setActiveRole(false);
+                }}
+              >
+                <option value="">All Status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </Form.Select>
+            </Col>
+            <Col md={2} className="d-grid d-md-flex justify-content-md-end">
               <Button
                 onClick={() => setShowCreate(true)}
                 variant="outline-primary"

@@ -149,7 +149,7 @@ export default function LeadCreateModal({
             >
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.planName} (ID: {p.id})
+                  {p.policyName}
                 </option>
               ))}
             </Form.Select>
