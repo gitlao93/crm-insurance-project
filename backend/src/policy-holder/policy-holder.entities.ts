@@ -1,4 +1,5 @@
 import { Lead } from 'src/lead/lead.entities';
+import { PolicyDependent } from 'src/policy-dependent/policy-dependent.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
 import { User } from 'src/user/user.entities';
 import {
@@ -10,6 +11,7 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 
 export enum PolicyHolderStatus {
@@ -67,15 +69,15 @@ export class PolicyHolder {
   @Column()
   EndDate: Date;
 
-  @Column()
-  dueDate: Date;
-
   @Column({ nullable: true })
   leadId: number;
 
   @OneToOne(() => Lead, (lead) => lead.policyHolder, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'leadId' })
   lead: Lead;
+
+  @OneToMany(() => PolicyDependent, (dependent) => dependent.policyHolder)
+  dependents: PolicyDependent[];
 
   @CreateDateColumn()
   createdAt: Date;

@@ -57,8 +57,4 @@ export class CreatePolicyHolderDto {
   @IsNotEmpty()
   @IsDateString()
   EndDate: Date;
-
-  @IsNotEmpty()
-  @IsDateString()
-  dueDate: Date;
 }

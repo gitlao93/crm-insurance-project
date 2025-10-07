@@ -30,7 +30,6 @@ export interface PolicyHolder {
   updatedAt?: string;
   StartDate?: string;
   EndDate?: string;
-  dueDate?: string;
   // Optional relations
   policyPlan: PolicyPlan;
   agent: User;
@@ -48,7 +47,6 @@ export interface CreatePolicyHolderRequest {
   agencyId: number;
   StartDate?: string;
   EndDate?: string;
-  dueDate?: string;
   status: PolicyHolderStatus;
   leadId?: number | null;
 }
