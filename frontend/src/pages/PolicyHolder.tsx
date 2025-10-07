@@ -159,11 +159,6 @@ export default function PolicyHolder() {
       sortable: true,
     },
     {
-      name: "Due Date",
-      selector: (row) => `${row.dueDate?.split("T")[0] ?? ""}`,
-      sortable: true,
-    },
-    {
       name: "Status",
       selector: (row) => `${row.status}`,
       sortable: true,

@@ -85,12 +85,17 @@ export default function PolicyHolderCreateModal({
 
   // 2️⃣ When plans are loaded, set initial selected plan ONCE
   useEffect(() => {
-    if (plans.length > 0 && formData.policyPlanId === 0) {
-      const firstPlan = plans[0];
-      setFormData((prev) => ({ ...prev, policyPlanId: firstPlan.id }));
-      setSelectedPlan(firstPlan);
+    if (lead && show) {
+      setFormData((prev) => ({
+        ...prev,
+        leadId: lead.id,
+        firstName: lead.firstName ?? "",
+        lastName: lead.lastName ?? "",
+        email: lead.email ?? "",
+        phoneNumber: lead.phoneNumber ?? "",
+      }));
     }
-  }, [formData.policyPlanId, plans]); // 👈 only runs when plans change
+  }, [lead, show]);
 
   // ==========================
   // 🔧 Handlers
@@ -109,6 +114,16 @@ export default function PolicyHolderCreateModal({
       }
 
       setFormData((prev) => ({ ...prev, [field]: value }));
+
+      if (field === "policyPlanId") {
+        const plan = plans.find((p) => p.id === Number(value)) ?? null;
+        setSelectedPlan(plan);
+
+        // Optional: reset dependents if not Family plan
+        if (plan?.category?.categoryName !== "Family") {
+          setDependents([]);
+        }
+      }
 
       const errorMsg = validateField(field, value);
       setErrors((prev) => ({ ...prev, [field]: errorMsg }));

@@ -21,6 +21,8 @@ export class DashboardService {
     return this.policyHolderRepo
       .createQueryBuilder('ph')
       .select('ph.agentId', 'agentId')
+      .addSelect('ph.firstName', 'firstName') // alias firstName
+      .addSelect('ph.lastName', 'lastName')
       .addSelect('COUNT(ph.id)', 'total')
       .groupBy('ph.agentId')
       .getRawMany();

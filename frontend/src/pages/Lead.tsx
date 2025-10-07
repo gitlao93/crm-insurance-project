@@ -242,12 +242,14 @@ export default function UserPage() {
               </Form.Select>
             </Col>
             <Col md={5} className="d-grid d-md-flex justify-content-md-end">
-              <Button
-                onClick={() => setShowCreate(true)}
-                variant="outline-primary"
-              >
-                Add Lead
-              </Button>
+              {userObj.role === "agent" ? (
+                <Button
+                  onClick={() => setShowCreate(true)}
+                  variant="outline-primary"
+                >
+                  Add Lead
+                </Button>
+              ) : null}
             </Col>
           </Row>
           {loadingLeads ? (

@@ -95,7 +95,7 @@ export default function PolicyPlan() {
 
   const columns: TableColumn<PolicyPlan>[] = [
     {
-      name: "Category",
+      name: "Categories",
       selector: (row) => row.category?.categoryName ?? "",
       sortable: true,
     },
@@ -105,7 +105,7 @@ export default function PolicyPlan() {
       sortable: true,
     },
     {
-      name: "Policy Type",
+      name: "Type",
       selector: (row) => row.policyType,
     },
     {
@@ -122,7 +122,7 @@ export default function PolicyPlan() {
     },
     {
       name: "Commition(%)",
-      selector: (row) => row.duration + " " + "%",
+      selector: (row) => row.commition_rate + " " + "%",
     },
     {
       name: "Status",

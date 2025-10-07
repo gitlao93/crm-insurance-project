@@ -31,7 +31,8 @@ export interface PoliciesByMonth {
 }
 
 export interface PolicyHoldersByAgent {
-  agentId: number;
+  firstName: string;
+  lastName: string;
   total: number;
 }
 
@@ -40,7 +41,7 @@ export interface PolicyHoldersByAgent {
 // ==========================
 export default function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [monthlyPolicies, setMonthlyPolicies] = useState<PoliciesByMonth[]>([]);
+  // const [monthlyPolicies, setMonthlyPolicies] = useState<PoliciesByMonth[]>([]);
   const [agents, setAgents] = useState<PolicyHoldersByAgent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,14 +61,14 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [summaryData, monthlyData, agentData] = await Promise.all([
+        const [summaryData, agentData] = await Promise.all([
           dashboardService.getSummary(),
-          dashboardService.getPoliciesByMonth(),
+          // dashboardService.getPoliciesByMonth(),
           dashboardService.getPolicyHoldersByAgent(),
         ]);
 
         setSummary(summaryData);
-        setMonthlyPolicies(monthlyData);
+        // setMonthlyPolicies(monthlyData);
         setAgents(agentData);
       } catch (err) {
         console.error("Failed to load dashboard:", err);
@@ -87,20 +88,20 @@ export default function Dashboard() {
     );
 
   // ✅ Prepare Chart.js Data
-  const chartData = {
-    labels: monthlyPolicies.map((m) => m.month),
-    datasets: [
-      {
-        label: "Policies Created",
-        data: monthlyPolicies.map((m) => m.count),
-        borderColor: "#0d6efd",
-        backgroundColor: "rgba(13, 110, 253, 0.2)",
-        borderWidth: 2,
-        pointRadius: 4,
-        tension: 0.3,
-      },
-    ],
-  };
+  // const chartData = {
+  //   labels: monthlyPolicies.map((m) => m.month),
+  //   datasets: [
+  //     {
+  //       label: "Policies Created",
+  //       data: monthlyPolicies.map((m) => m.count),
+  //       borderColor: "#0d6efd",
+  //       backgroundColor: "rgba(13, 110, 253, 0.2)",
+  //       borderWidth: 2,
+  //       pointRadius: 4,
+  //       tension: 0.3,
+  //     },
+  //   ],
+  // };
 
   const chartOptions = {
     responsive: true,
@@ -164,7 +165,7 @@ export default function Dashboard() {
       {/* ======================= */}
       <Row className="mt-3">
         {/* 📈 Line Chart */}
-        <Col md={8} className="mb-4">
+        {/* <Col md={8} className="mb-4">
           <Card className="shadow-sm p-3">
             {monthlyPolicies.length === 0 ? (
               <div className="text-muted text-center">No data available</div>
@@ -172,7 +173,7 @@ export default function Dashboard() {
               <Line data={chartData} options={chartOptions} />
             )}
           </Card>
-        </Col>
+        </Col> */}
 
         {/* 🧑‍💼 Top Agents Table */}
         <Col md={4}>
@@ -186,7 +187,7 @@ export default function Dashboard() {
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Agent ID</th>
+                      <th>Agent</th>
                       <th>Policy Holders</th>
                     </tr>
                   </thead>
@@ -197,7 +198,9 @@ export default function Dashboard() {
                       .map((a, index) => (
                         <tr key={a.agentId}>
                           <td>{index + 1}</td>
-                          <td>{a.agentId}</td>
+                          <td>
+                            {a.firstName} {a.lastName}
+                          </td>
                           <td>{a.total}</td>
                         </tr>
                       ))}
