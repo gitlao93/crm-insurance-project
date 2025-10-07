@@ -9,6 +9,7 @@ import Lead from "./pages/Lead";
 import PolicyCategory from "./pages/PolicyCategory";
 import PolicyPlan from "./pages/PolicyPlan";
 import PolicyHolder from "./pages/PolicyHolder";
+import AgencySetting from "./pages/AgencySetting";
 
 function App() {
   return (
@@ -69,6 +70,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Lead />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="setting"
+            element={
+              <PrivateRoute>
+                <AgencySetting />
               </PrivateRoute>
             }
           />

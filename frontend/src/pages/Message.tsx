@@ -420,6 +420,18 @@ export default function Message() {
                           id: user.id,
                         })
                       }
+                      style={{
+                        backgroundColor:
+                          activeChat.type === "user" &&
+                          activeChat.id === user.id
+                            ? "#d8d8d8ff"
+                            : "transparent",
+                        borderColor:
+                          activeChat.type === "user" &&
+                          activeChat.id === user.id
+                            ? "#d8d8d8ff"
+                            : "transparent",
+                      }}
                     >
                       <h5>
                         {user.firstName} {user.lastName}
@@ -641,6 +653,7 @@ export default function Message() {
               <Form.Label>Role</Form.Label>
               <Form.Select
                 value={memberRole}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 onChange={(e) => setMemberRole(e.target.value as any)}
               >
                 <option value="member">Member</option>

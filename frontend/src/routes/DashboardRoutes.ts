@@ -74,4 +74,11 @@ export const DashboardMenu: DashboardMenuProps[] = [
     link: "/message",
     roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
   },
+  {
+    id: uuid(),
+    title: "Setting",
+    icon: "settings",
+    link: "/setting",
+    roles: ["admin"],
+  },
 ];
