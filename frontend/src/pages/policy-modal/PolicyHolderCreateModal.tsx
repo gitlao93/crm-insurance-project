@@ -212,10 +212,10 @@ export default function PolicyHolderCreateModal({
           ? new Date(formData.EndDate).toISOString()
           : undefined,
       };
-
+      console.log("payload", payload);
       // Create Policy Holder
       const holder = await policyHolderService.create(payload);
-
+      console.log("holder", holder);
       // Create dependents if Family plan
       if (selectedPlan?.category?.categoryName === "Family") {
         for (const dep of dependents) {

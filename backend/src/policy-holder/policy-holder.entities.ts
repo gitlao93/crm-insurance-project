@@ -1,6 +1,7 @@
 import { Lead } from 'src/lead/lead.entities';
 import { PolicyDependent } from 'src/policy-dependent/policy-dependent.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
+import { SOA } from 'src/soa/soa.entities';
 import { User } from 'src/user/user.entities';
 import {
   Column,
@@ -78,6 +79,9 @@ export class PolicyHolder {
 
   @OneToMany(() => PolicyDependent, (dependent) => dependent.policyHolder)
   dependents: PolicyDependent[];
+
+  @OneToOne(() => SOA, (soa) => soa.policyHolder, { cascade: true })
+  soa: SOA;
 
   @CreateDateColumn()
   createdAt: Date;
