@@ -11,6 +11,7 @@ import PolicyPlan from "./pages/PolicyPlan";
 import PolicyHolder from "./pages/PolicyHolder";
 import AgencySetting from "./pages/AgencySetting";
 import PolicyHolderSoa from "./pages/PolicyHolderSoa";
+import Commission from "./pages/Commission";
 
 function App() {
   return (
@@ -64,6 +65,15 @@ function App() {
             element={
               <PrivateRoute>
                 <PolicyHolderSoa />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="commission"
+            element={
+              <PrivateRoute>
+                <Commission />
               </PrivateRoute>
             }
           />

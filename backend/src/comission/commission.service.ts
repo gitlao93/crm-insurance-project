@@ -55,14 +55,14 @@ export class CommissionService {
 
   findAll() {
     return this.commissionRepo.find({
-      relations: ['agent', 'policyHolder', 'policyPlan', 'billing', 'user'],
+      relations: ['agent', 'policyHolder', 'policyPlan', 'billing'],
     });
   }
 
   findByAgent(agentId: number) {
     return this.commissionRepo.find({
       where: { agentId },
-      relations: ['policyHolder', 'policyPlan', 'billing', 'user'],
+      relations: ['policyHolder', 'policyPlan', 'billing'],
     });
   }
 }
