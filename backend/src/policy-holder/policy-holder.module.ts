@@ -7,10 +7,11 @@ import { User } from 'src/user/user.entities';
 import { SOA } from 'src/soa/soa.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
 import { SoaModule } from 'src/soa/soa.module';
+import { Billing } from 'src/billing/billing.entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PolicyHolder, User, SOA, PolicyPlan]),
+    TypeOrmModule.forFeature([PolicyHolder, User, SOA, PolicyPlan, Billing]),
     SoaModule,
   ],
   providers: [PolicyHolderService],

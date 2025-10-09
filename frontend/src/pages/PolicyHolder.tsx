@@ -18,12 +18,14 @@ import {
 } from "../services/policyHolderService";
 import type { TableColumn } from "react-data-table-component";
 import DataTable from "react-data-table-component";
-import { PencilSquare } from "react-bootstrap-icons";
+import { BoxArrowRight, PencilSquare } from "react-bootstrap-icons";
 import PolicyHolderCreateModal from "./policy-modal/PolicyHolderCreateModal";
 import { leadService, type Lead } from "../services/leadServices";
 import UpdatePolicyHolderModal from "./policy-modal/UpdatePolicyHolderModal";
+import { useNavigate } from "react-router-dom";
 
 export default function PolicyHolder() {
+  const navigate = useNavigate();
   const storedUser = localStorage.getItem("user") ?? "";
   const userObj = JSON.parse(storedUser);
 
@@ -113,6 +115,11 @@ export default function PolicyHolder() {
     setSelectedPolicyHolder(holder);
     setShowEditModal(true);
   };
+  const handleViewSoa = (holder: PolicyHolder) => {
+    // setSelectedPolicyHolder(holder);
+    sessionStorage.setItem("selectedPolicyHolder", JSON.stringify(holder));
+    navigate("/policy-holder-soa");
+  };
 
   // 🔹 Filter Policy Holders
   const filteredPolicyHolder = policyHolder.filter((u) => {
@@ -191,6 +198,22 @@ export default function PolicyHolder() {
               }}
             >
               <PencilSquare size={18} className="text-primary" />
+            </span>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id={`tooltip-edit-${row.id}`}>View SOA</Tooltip>}
+          >
+            <span
+              role="button"
+              onClick={() => handleViewSoa(row)}
+              style={{
+                cursor: "pointer",
+                display: "inline-block",
+                lineHeight: 0,
+              }}
+            >
+              <BoxArrowRight size={18} className="text-secondary" />
             </span>
           </OverlayTrigger>
         </div>

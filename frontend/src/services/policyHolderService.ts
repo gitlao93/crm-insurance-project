@@ -1,10 +1,60 @@
 import api from "./api";
-import type { PolicyPlan } from "./policyServices";
+import type { PolicyPlan, PolicyTerm } from "./policyServices";
 import type { User } from "./userService";
 
 // ==========================
 // 📘 Types
 // ==========================
+
+/** ========================
+ * 🧾 Billing Status Enum
+ * ======================== */
+export enum BillingStatus {
+  PENDING = "Pending",
+  PAID = "Paid",
+  OVERDUE = "Overdue",
+  LAPSED = "Lapsed",
+}
+
+/** ========================
+ * 💰 Billing Interface
+ * ======================== */
+export interface Billing {
+  id: number;
+  soaId: number;
+  installmentNumber: number;
+  dueDate: string;
+  amount: number;
+  amountPaid: number;
+  paidDate?: string | null;
+  status: BillingStatus;
+  receiptNumber?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** ========================
+ * 📄 SOA (Statement of Account)
+ * ======================== */
+export interface SOA {
+  id: number;
+  policyHolderId: number;
+  policyPlanId: number;
+  policyPlan: PolicyPlan;
+  startDate: string;
+  endDate: string;
+  paymentTerm: PolicyTerm; // e.g. 'Monthly' | 'Quarterly' | 'Annually'
+  duration: number; // number of months/years
+  premiumPerTerm: number;
+  totalPremium: number;
+  totalPaid: number;
+  balance: number;
+  policyNumber: string;
+  status: string; // e.g. 'Active'
+  billings: Billing[];
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 // Optional enum for status (you can adjust based on your backend schema)
 export enum PolicyHolderStatus {
@@ -34,6 +84,7 @@ export interface PolicyHolder {
   policyPlan: PolicyPlan;
   agent: User;
   leadId?: number | null;
+  soa: SOA;
 }
 
 // Create DTO

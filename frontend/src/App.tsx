@@ -10,6 +10,7 @@ import PolicyCategory from "./pages/PolicyCategory";
 import PolicyPlan from "./pages/PolicyPlan";
 import PolicyHolder from "./pages/PolicyHolder";
 import AgencySetting from "./pages/AgencySetting";
+import PolicyHolderSoa from "./pages/PolicyHolderSoa";
 
 function App() {
   return (
@@ -54,6 +55,15 @@ function App() {
             element={
               <PrivateRoute>
                 <PolicyHolder />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="policy-holder-soa"
+            element={
+              <PrivateRoute>
+                <PolicyHolderSoa />
               </PrivateRoute>
             }
           />

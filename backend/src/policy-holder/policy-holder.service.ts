@@ -146,21 +146,39 @@ export class PolicyHolderService {
     if (!userId) {
       console.log('Fetching all leads without user filter');
       return this.policyHolderRepository.find({
-        relations: ['agent', 'policyPlan'],
+        relations: [
+          'agent',
+          'policyPlan',
+          'policyPlan.category',
+          'soa',
+          'soa.billings',
+        ],
       });
     }
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (user && user.role === UserRole.AGENT) {
       return this.policyHolderRepository.find({
         where: { agentId: userId },
-        relations: ['agent', 'policyPlan'],
+        relations: [
+          'agent',
+          'policyPlan',
+          'policyPlan.category',
+          'soa',
+          'soa.billings',
+        ],
       });
     }
 
     if (user && user.role === UserRole.ADMIN) {
       return this.policyHolderRepository.find({
         where: { agencyId: user.agencyId },
-        relations: ['agent', 'policyPlan'],
+        relations: [
+          'agent',
+          'policyPlan',
+          'policyPlan.category',
+          'soa',
+          'soa.billings',
+        ],
       });
     }
   }
