@@ -14,7 +14,6 @@ import {
   commissionService,
   type Commission,
 } from "../services/commissionService";
-import { BorderLeft } from "react-bootstrap-icons";
 
 export default function CommissionPage() {
   const storedUser = localStorage.getItem("user") ?? "";

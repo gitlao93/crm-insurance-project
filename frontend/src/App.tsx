@@ -12,11 +12,13 @@ import PolicyHolder from "./pages/PolicyHolder";
 import AgencySetting from "./pages/AgencySetting";
 import PolicyHolderSoa from "./pages/PolicyHolderSoa";
 import Commission from "./pages/Commission";
+import Home from "./pages/Home";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/Home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<RootLayout />}>
           <Route
