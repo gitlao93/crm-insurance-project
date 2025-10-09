@@ -44,7 +44,7 @@ export class PolicyPlan {
   duration: number;
 
   @Column({ type: 'int' })
-  commition_rate: number; // ✅ fixed type
+  commission_rate: number; // ✅ fixed type
 
   @Column({ type: 'int' })
   premium: number;

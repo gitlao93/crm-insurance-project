@@ -13,8 +13,9 @@ import { UpdatePolicyHolderDto } from './dto/update-policy-holder.dto';
 import { PolicyPlan, PolicyTerm } from 'src/policy-plan/policy-plan.entities';
 import { SoaService } from 'src/soa/soa.service';
 import { SOA } from 'src/soa/soa.entities';
-import { Billing } from 'src/billing/billing.entities';
+import { Billing, BillingStatus } from 'src/billing/billing.entities';
 import { addMonths, addYears } from 'date-fns';
+import { Commission } from 'src/comission/commisson.entities';
 
 @Injectable()
 export class PolicyHolderService {
@@ -33,13 +34,16 @@ export class PolicyHolderService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: CreatePolicyHolderDto): Promise<PolicyHolder> {
+  async create(
+    dto: CreatePolicyHolderDto,
+    receiptNumber?: string,
+  ): Promise<PolicyHolder> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // 1️⃣ Create PolicyHolder inside transaction
+      // 1️⃣ Create PolicyHolder
       const holder = queryRunner.manager.create(PolicyHolder, dto);
       await queryRunner.manager.save(holder);
 
@@ -48,85 +52,116 @@ export class PolicyHolderService {
         where: { id: dto.policyPlanId },
       });
       if (!plan) throw new NotFoundException('Policy Plan not found');
-      let totalInstallments = 0;
 
+      // Calculate total installments
+      let totalInstallments = 0;
       switch (plan.term) {
         case PolicyTerm.MONTHLY:
           totalInstallments = plan.duration * 12;
           break;
-
         case PolicyTerm.QUARTERLY:
           totalInstallments = plan.duration * 4;
           break;
-
         case PolicyTerm.ANNUALLY:
           totalInstallments = plan.duration;
           break;
       }
 
-      // 3️⃣ Prepare SOA data
-      const startDate = new Date(dto.StartDate).toISOString();
-      const endDate = new Date(dto.EndDate).toISOString();
-
-      const paymentTerm = plan.term;
-      const premiumPerTerm = plan.premium;
-      const duration = plan.duration;
-      const totalPremium = premiumPerTerm * totalInstallments;
+      // 3️⃣ Prepare SOA
+      const startDate = new Date(dto.StartDate);
+      const endDate = new Date(dto.EndDate);
+      const totalPremium = plan.premium * totalInstallments;
       const policyNumber = `POL-${holder.id}-${Date.now()}`;
 
-      // 4️⃣ Create SOA (without billings)
       const soa = queryRunner.manager.create(SOA, {
         policyHolderId: holder.id,
-        policyPlanId: dto.policyPlanId,
+        policyPlanId: plan.id,
         startDate,
         endDate,
-        paymentTerm,
-        premiumPerTerm,
-        duration,
+        paymentTerm: plan.term,
+        premiumPerTerm: plan.premium,
+        duration: plan.duration,
         totalPremium,
-        status: 'Active',
-        policyNumber,
         totalPaid: 0,
         balance: totalPremium,
+        status: 'Active',
+        policyNumber,
       });
       await queryRunner.manager.save(soa);
 
-      // 5️⃣ Create Billing Schedule here
-      const billings: Billing[] = [];
-      for (let i = 0; i < totalInstallments; i++) {
-        let dueDate: Date;
+      // 4️⃣ Create First Billing (paid immediately)
+      const firstBilling = queryRunner.manager.create(Billing, {
+        soaId: soa.id,
+        installmentNumber: 1,
+        amount: plan.premium,
+        amountPaid: plan.premium,
+        dueDate: startDate,
+        status: BillingStatus.PAID,
+        receiptNumber: receiptNumber,
+        paidDate: new Date(),
+      });
+      await queryRunner.manager.save(firstBilling);
 
+      // Update SOA with first payment
+      soa.totalPaid = plan.premium;
+      soa.balance = totalPremium - plan.premium;
+      await queryRunner.manager.save(soa);
+
+      // 5️⃣ Create Commission for first payment
+      if (holder.agentId && plan.commission_rate > 0) {
+        const commissionAmount = (plan.commission_rate / 100) * plan.premium;
+
+        const commission = queryRunner.manager.create(Commission, {
+          billing: firstBilling,
+          soa,
+          policyPlan: plan,
+          policyHolder: holder,
+          agentId: holder.agentId,
+          amount: commissionAmount,
+          paid: false,
+        });
+
+        await queryRunner.manager.save(commission);
+      }
+
+      // 6️⃣ Create remaining billings (pending)
+      const billings: Billing[] = [];
+      for (let i = 1; i < totalInstallments; i++) {
+        let dueDate: Date;
         switch (plan.term) {
           case PolicyTerm.ANNUALLY:
-            dueDate = addYears(new Date(startDate), i);
+            dueDate = addYears(startDate, i);
             break;
-
           case PolicyTerm.QUARTERLY:
-            dueDate = addMonths(new Date(startDate), i * 3);
+            dueDate = addMonths(startDate, i * 3);
             break;
-
-          case PolicyTerm.MONTHLY: // Monthly
-            dueDate = addMonths(new Date(startDate), i);
+          case PolicyTerm.MONTHLY:
+          default:
+            dueDate = addMonths(startDate, i);
+            break;
         }
 
-        billings.push(
-          queryRunner.manager.create(Billing, {
-            soaId: soa.id,
-            installmentNumber: i + 1,
-            amount: premiumPerTerm,
-            dueDate,
-          }),
-        );
+        const billing = queryRunner.manager.create(Billing, {
+          soaId: soa.id,
+          installmentNumber: i + 1,
+          amount: plan.premium,
+          amountPaid: 0,
+          dueDate,
+          status: BillingStatus.PENDING,
+        });
+
+        billings.push(billing);
       }
 
       await queryRunner.manager.save(billings);
 
-      // 6️⃣ Commit transaction
+      // 7️⃣ Commit transaction
       await queryRunner.commitTransaction();
 
+      // 8️⃣ Return created holder with relations
       const createdHolder = await this.policyHolderRepository.findOne({
         where: { id: holder.id },
-        relations: ['policyPlan', 'soa', 'soa.billings'],
+        relations: ['policyPlan', 'soa', 'soa.billings', 'agent'],
       });
 
       if (!createdHolder)

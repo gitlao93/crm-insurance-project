@@ -25,7 +25,7 @@ export default function PolicyPlanCreateModal({
     policyType: PolicyType.LIFE,
     term: PolicyTerm.MONTHLY,
     duration: 1,
-    commition_rate: 0,
+    commission_rate: 0,
     premium: 0,
     status: "Active",
     categoryId: 0,
@@ -68,7 +68,7 @@ export default function PolicyPlanCreateModal({
         policyType: PolicyType.LIFE,
         term: PolicyTerm.MONTHLY,
         duration: 1,
-        commition_rate: 0,
+        commission_rate: 0,
         premium: 0,
         status: "Active",
         categoryId: 0,
@@ -159,9 +159,9 @@ export default function PolicyPlanCreateModal({
             <Form.Label>Commition Rate(%)</Form.Label>
             <Form.Control
               type="number"
-              name="commition_rate"
-              value={formData.commition_rate}
-              onChange={handleChange("commition_rate")}
+              name="commission_rate"
+              value={formData.commission_rate}
+              onChange={handleChange("commission_rate")}
             />
           </Form.Group>
         </Form>

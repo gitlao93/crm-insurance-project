@@ -51,6 +51,7 @@ export default function PolicyHolderCreateModal({
     EndDate: "",
     status: PolicyHolderStatus.ACTIVE,
     leadId: null,
+    receiptNumber: "",
   };
 
   const [formData, setFormData] =
@@ -384,6 +385,20 @@ export default function PolicyHolderCreateModal({
               </Form.Group>
             </Col>
           </Row>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Receipt Number</Form.Label>
+            <Form.Control
+              type="text"
+              value={formData.receiptNumber ?? ""}
+              onChange={handleChange("receiptNumber")}
+              isInvalid={!!errors.receiptNumber}
+              placeholder="Enter receipt number for initial payment"
+            />
+            <Form.Control.Feedback type="invalid">
+              {errors.receiptNumber}
+            </Form.Control.Feedback>
+          </Form.Group>
 
           <Form.Group className="mb-3">
             <Form.Label>Status</Form.Label>

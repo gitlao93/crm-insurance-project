@@ -23,8 +23,13 @@ export class PolicyHolderController {
 
   // ✅ Create a new Policy Holder
   @Post()
-  async create(@Body() dto: CreatePolicyHolderDto): Promise<PolicyHolder> {
-    return this.policyHolderService.create(dto);
+  async create(
+    @Body() body: CreatePolicyHolderDto & { receiptNumber?: string },
+  ): Promise<PolicyHolder> {
+    const { receiptNumber, ...dto } = body;
+    if (receiptNumber)
+      return this.policyHolderService.create(dto, receiptNumber);
+    else return this.policyHolderService.create(dto);
   }
 
   // ✅ Get all Policy Holders (optionally filtered by userId)

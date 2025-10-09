@@ -31,6 +31,8 @@ import { BillingModule } from './billing/billing.module';
 import { SOA } from './soa/soa.entities';
 import { Billing } from './billing/billing.entities';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CommissionModule } from './comission/commission.module';
+import { Commission } from './comission/commisson.entities';
 
 @Module({
   imports: [
@@ -58,6 +60,7 @@ import { ScheduleModule } from '@nestjs/schedule';
         PolicyDependent,
         SOA,
         Billing,
+        Commission,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -77,6 +80,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     DashboardModule,
     SoaModule,
     BillingModule,
+    CommissionModule,
   ],
   controllers: [],
   providers: [],

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Repository } from 'typeorm';
@@ -7,6 +13,7 @@ import { UpdateBillingDto } from './dto/update-billing.dto';
 import { SOA } from 'src/soa/soa.entities';
 import { isAfter } from 'date-fns';
 import { Billing, BillingStatus } from './billing.entities';
+import { CommissionService } from 'src/comission/commission.service';
 
 @Injectable()
 export class BillingService {
@@ -18,6 +25,9 @@ export class BillingService {
 
     @InjectRepository(SOA)
     private readonly soaRepo: Repository<SOA>,
+
+    @Inject(forwardRef(() => CommissionService)) // 👈 handle potential circular dep
+    private readonly commissionService: CommissionService,
   ) {}
 
   async create(dto: CreateBillingDto): Promise<Billing> {
@@ -47,12 +57,17 @@ export class BillingService {
     return billing;
   }
 
+  // billing.service.ts (minimal, correct ordering)
   async update(id: number, dto: UpdateBillingDto): Promise<Billing> {
     const billing = await this.findOne(id);
     Object.assign(billing, dto);
 
     billing.status = this.calculateStatus(billing);
 
+    // 1) Save billing first (persist updated amountPaid)
+    await this.billingRepo.save(billing);
+
+    // 2) Now update related SOA totals using persisted data
     if (dto.amountPaid !== undefined) {
       const soa = await this.soaRepo.findOne({ where: { id: billing.soaId } });
       if (soa) {
@@ -67,10 +82,16 @@ export class BillingService {
         soa.totalPaid = totalPaid;
         soa.balance = soa.totalPremium - totalPaid;
         await this.soaRepo.save(soa);
+
+        // 3) Create commission AFTER billing has been saved and SOA updated.
+        // CommissionService should check for existing commission to avoid duplicates.
+        if (billing.amountPaid > 0) {
+          await this.commissionService.createCommissionForBilling(billing.id);
+        }
       }
     }
 
-    await this.billingRepo.save(billing);
+    // Return fresh billing
     return this.findOne(billing.id);
   }
 

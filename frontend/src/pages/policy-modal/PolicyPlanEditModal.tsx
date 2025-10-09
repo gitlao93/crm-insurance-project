@@ -167,9 +167,9 @@ export default function PolicyPlanEditModal({
               <Form.Label>Commission Rate (%)</Form.Label>
               <Form.Control
                 type="number"
-                name="commition_rate"
-                value={formData.commition_rate}
-                onChange={handleChange("commition_rate")}
+                name="commission_rate"
+                value={formData.commission_rate}
+                onChange={handleChange("commission_rate")}
               />
             </Form.Group>
 

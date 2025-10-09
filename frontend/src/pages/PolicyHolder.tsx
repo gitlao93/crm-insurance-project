@@ -14,15 +14,17 @@ import PageHeading from "../widgets/PageHeading";
 import { useCallback, useEffect, useState } from "react";
 import {
   policyHolderService,
+  type Billing,
   type PolicyHolder,
 } from "../services/policyHolderService";
 import type { TableColumn } from "react-data-table-component";
 import DataTable from "react-data-table-component";
-import { BoxArrowRight, PencilSquare } from "react-bootstrap-icons";
+import { BoxArrowRight, PencilSquare, Wallet } from "react-bootstrap-icons";
 import PolicyHolderCreateModal from "./policy-modal/PolicyHolderCreateModal";
 import { leadService, type Lead } from "../services/leadServices";
 import UpdatePolicyHolderModal from "./policy-modal/UpdatePolicyHolderModal";
 import { useNavigate } from "react-router-dom";
+import BillingPaymentModal from "./billing-modal/BillingPaymentModal";
 
 export default function PolicyHolder() {
   const navigate = useNavigate();
@@ -46,6 +48,9 @@ export default function PolicyHolder() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPolicyHolder, setSelectedPolicyHolder] =
     useState<PolicyHolder | null>(null);
+
+  const [billings, setBillings] = useState<Billing[]>([]);
+  const [showPayment, setShowPayment] = useState(false);
 
   // 🔹 Fetch Leads
   const fetchLeads = useCallback(async () => {
@@ -119,6 +124,11 @@ export default function PolicyHolder() {
     // setSelectedPolicyHolder(holder);
     sessionStorage.setItem("selectedPolicyHolder", JSON.stringify(holder));
     navigate("/policy-holder-soa");
+  };
+
+  const handleOpenPayment = (holder: PolicyHolder) => {
+    setBillings(holder.soa.billings);
+    setShowPayment(true);
   };
 
   // 🔹 Filter Policy Holders
@@ -214,6 +224,24 @@ export default function PolicyHolder() {
               }}
             >
               <BoxArrowRight size={18} className="text-secondary" />
+            </span>
+          </OverlayTrigger>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`tooltip-edit-${row.id}`}>Policy Payment</Tooltip>
+            }
+          >
+            <span
+              role="button"
+              onClick={() => handleOpenPayment(row)}
+              style={{
+                cursor: "pointer",
+                display: "inline-block",
+                lineHeight: 0,
+              }}
+            >
+              <Wallet size={18} className="text-secondary" />
             </span>
           </OverlayTrigger>
         </div>
@@ -345,6 +373,13 @@ export default function PolicyHolder() {
         onClose={() => setShowEditModal(false)}
         onSuccess={fetchPolicyHolder}
         policyHolder={selectedPolicyHolder}
+      />
+
+      <BillingPaymentModal
+        show={showPayment}
+        onClose={() => setShowPayment(false)}
+        onSuccess={fetchPolicyHolder}
+        billings={billings}
       />
     </Container>
   );

@@ -122,7 +122,7 @@ export default function PolicyPlan() {
     },
     {
       name: "Commition(%)",
-      selector: (row) => row.commition_rate + " " + "%",
+      selector: (row) => row.commission_rate + " " + "%",
     },
     {
       name: "Status",
