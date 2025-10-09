@@ -30,7 +30,7 @@ export class CreatePolicyPlanDto {
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  commition_rate: number;
+  commission_rate: number;
 
   @Type(() => Number)
   @IsInt()

@@ -26,9 +26,17 @@ import { PolicyHolder } from './policy-holder/policy-holder.entities';
 import { PolicyDependentModule } from './policy-dependent/policy-dependent.module';
 import { PolicyDependent } from './policy-dependent/policy-dependent.entities';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SoaModule } from './soa/soa.module';
+import { BillingModule } from './billing/billing.module';
+import { SOA } from './soa/soa.entities';
+import { Billing } from './billing/billing.entities';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CommissionModule } from './comission/commission.module';
+import { Commission } from './comission/commisson.entities';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',
@@ -50,6 +58,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
         DirectMessage,
         PolicyHolder,
         PolicyDependent,
+        SOA,
+        Billing,
+        Commission,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -67,6 +78,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     PolicyHolderModule,
     PolicyDependentModule,
     DashboardModule,
+    SoaModule,
+    BillingModule,
+    CommissionModule,
   ],
   controllers: [],
   providers: [],

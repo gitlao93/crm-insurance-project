@@ -51,6 +51,7 @@ export default function PolicyHolderCreateModal({
     EndDate: "",
     status: PolicyHolderStatus.ACTIVE,
     leadId: null,
+    receiptNumber: "",
   };
 
   const [formData, setFormData] =
@@ -113,17 +114,37 @@ export default function PolicyHolderCreateModal({
         value = Number(value);
       }
 
-      setFormData((prev) => ({ ...prev, [field]: value }));
+      setFormData((prev) => {
+        const updated = { ...prev, [field]: value };
 
-      if (field === "policyPlanId") {
-        const plan = plans.find((p) => p.id === Number(value)) ?? null;
-        setSelectedPlan(plan);
-
-        // Optional: reset dependents if not Family plan
-        if (plan?.category?.categoryName !== "Family") {
-          setDependents([]);
+        // ✅ If StartDate changes and we have a selected plan, auto-calc EndDate
+        if (field === "StartDate" && selectedPlan) {
+          const startDate = new Date(value);
+          const endDate = new Date(startDate);
+          endDate.setFullYear(startDate.getFullYear() + selectedPlan.duration);
+          updated.EndDate = endDate.toISOString().split("T")[0]; // format as yyyy-MM-dd
         }
-      }
+
+        // ✅ If plan changes, also auto-recalculate EndDate if StartDate is set
+        if (field === "policyPlanId") {
+          const plan = plans.find((p) => p.id === Number(value)) ?? null;
+          setSelectedPlan(plan);
+
+          if (plan && updated.StartDate) {
+            const startDate = new Date(updated.StartDate);
+            const endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + plan.duration);
+            updated.EndDate = endDate.toISOString().split("T")[0];
+          }
+
+          // Optional: reset dependents if not Family plan
+          if (plan?.category?.categoryName !== "Family") {
+            setDependents([]);
+          }
+        }
+
+        return updated;
+      });
 
       const errorMsg = validateField(field, value);
       setErrors((prev) => ({ ...prev, [field]: errorMsg }));
@@ -212,10 +233,10 @@ export default function PolicyHolderCreateModal({
           ? new Date(formData.EndDate).toISOString()
           : undefined,
       };
-
+      console.log("payload", payload);
       // Create Policy Holder
       const holder = await policyHolderService.create(payload);
-
+      console.log("holder", holder);
       // Create dependents if Family plan
       if (selectedPlan?.category?.categoryName === "Family") {
         for (const dep of dependents) {
@@ -355,12 +376,29 @@ export default function PolicyHolderCreateModal({
                 <Form.Control
                   type="date"
                   value={formData.EndDate}
-                  onChange={handleChange("EndDate")}
-                  isInvalid={!!errors.EndDate}
+                  readOnly
+                  disabled
                 />
+                <Form.Text className="text-muted">
+                  Auto-calculated based on plan duration
+                </Form.Text>
               </Form.Group>
             </Col>
           </Row>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Receipt Number</Form.Label>
+            <Form.Control
+              type="text"
+              value={formData.receiptNumber ?? ""}
+              onChange={handleChange("receiptNumber")}
+              isInvalid={!!errors.receiptNumber}
+              placeholder="Enter receipt number for initial payment"
+            />
+            <Form.Control.Feedback type="invalid">
+              {errors.receiptNumber}
+            </Form.Control.Feedback>
+          </Form.Group>
 
           <Form.Group className="mb-3">
             <Form.Label>Status</Form.Label>

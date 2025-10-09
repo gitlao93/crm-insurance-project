@@ -38,7 +38,7 @@ const Login = () => {
         <Card className="smooth-shadow-md">
           <Card.Body className="p-6">
             <div className="d-flex flex-column justify-content-center align-items-center">
-              <Link to="/" className="mx-auto">
+              <Link to="/home" className="mx-auto">
                 <Image src="/images/brand/goodlife-logo.png" alt="" />
               </Link>
               <h1 className="mb-6">Goodlife Damayanan</h1>

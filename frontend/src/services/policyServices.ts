@@ -30,7 +30,7 @@ export interface PolicyPlan {
   policyType: PolicyType;
   term: PolicyTerm;
   duration: number;
-  commition_rate: number;
+  commission_rate: number;
   premium: number;
   status: "active" | "inactive" | string;
   categoryId: number;
@@ -52,7 +52,7 @@ export interface CreatePolicyPlanRequest {
   policyType: PolicyType;
   term: PolicyTerm;
   duration: number;
-  commition_rate: number;
+  commission_rate: number;
   premium: number;
   status: "Active" | "Retired";
   categoryId: number;
