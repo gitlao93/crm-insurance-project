@@ -18,6 +18,13 @@ export enum PolicyTerm {
   ANNUALLY = 'Annually',
 }
 
+export enum ClaimType {
+  DEATH = 'Death',
+  BURIAL = 'Burial',
+  ACCIDENT = 'Accident',
+  HOSPITALIZATION = 'Hospitalization',
+}
+
 @Entity('policy_plans')
 export class PolicyPlan {
   @PrimaryGeneratedColumn()
@@ -60,4 +67,10 @@ export class PolicyPlan {
   })
   @JoinColumn({ name: 'categoryId' })
   category: PolicyCategory;
+
+  @Column({ type: 'varchar', nullable: true })
+  description: string;
+
+  @Column({ type: 'json', nullable: true })
+  benefits: Record<ClaimType, number>;
 }
