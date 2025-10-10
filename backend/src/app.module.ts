@@ -33,6 +33,7 @@ import { Billing } from './billing/billing.entities';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CommissionModule } from './comission/commission.module';
 import { Commission } from './comission/commisson.entities';
+import { ClaimModule } from './claim/claim.module';
 
 @Module({
   imports: [
@@ -43,7 +44,7 @@ import { Commission } from './comission/commisson.entities';
       port: 3306,
       username: 'root',
       password: '',
-      database: 'crm_db',
+      database: 'crm',
       entities: [
         User,
         Agency,
@@ -81,6 +82,7 @@ import { Commission } from './comission/commisson.entities';
     SoaModule,
     BillingModule,
     CommissionModule,
+    ClaimModule,
   ],
   controllers: [],
   providers: [],

@@ -288,6 +288,7 @@ export default function PolicyHolderCreateModal({
               onChange={handleChange("policyPlanId")}
               disabled={loadingPlans || plans.length === 0}
             >
+              <option value="">Select Plan</option>
               {plans.map((p) => (
                 <option
                   key={p.id}

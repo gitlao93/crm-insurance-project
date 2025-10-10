@@ -13,6 +13,7 @@ import {
   JoinColumn,
   OneToOne,
   OneToMany,
+  BeforeInsert,
 } from 'typeorm';
 
 export enum PolicyHolderStatus {
@@ -82,6 +83,26 @@ export class PolicyHolder {
 
   @OneToOne(() => SOA, (soa) => soa.policyHolder, { cascade: true })
   soa: SOA;
+
+  @Column({ type: 'varchar', unique: true })
+  policyNumber: string;
+
+  @BeforeInsert()
+  generatePolicyNumber() {
+    const now = new Date();
+    const formatted =
+      now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, '0') +
+      now.getDate().toString().padStart(2, '0') +
+      '-' +
+      now.getHours().toString().padStart(2, '0') +
+      now.getMinutes().toString().padStart(2, '0') +
+      now.getSeconds().toString().padStart(2, '0');
+    const randomSuffix = Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, '0');
+    this.policyNumber = `POL-${formatted}-${randomSuffix}`;
+  }
 
   @CreateDateColumn()
   createdAt: Date;
