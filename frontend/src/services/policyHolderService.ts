@@ -126,6 +126,13 @@ export const policyHolderService = {
     return res.data;
   },
 
+  async findPolicyHolder(policyNumber: string): Promise<PolicyHolder> {
+    const { data } = await api.get<PolicyHolder>(
+      `/policy-holder/policy/${policyNumber}`
+    );
+    return data;
+  },
+
   // ✅ Get Single Policy Holder by ID
   async getById(id: number): Promise<PolicyHolder> {
     const res = await api.get<PolicyHolder>(`/policy-holders/${id}`);

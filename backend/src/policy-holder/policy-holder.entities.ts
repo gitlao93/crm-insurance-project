@@ -1,3 +1,4 @@
+import { Claim } from 'src/claim/claim.entities';
 import { Lead } from 'src/lead/lead.entities';
 import { PolicyDependent } from 'src/policy-dependent/policy-dependent.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
@@ -103,6 +104,9 @@ export class PolicyHolder {
       .padStart(4, '0');
     this.policyNumber = `POL-${formatted}-${randomSuffix}`;
   }
+
+  @OneToMany(() => Claim, (claim) => claim.policyHolder)
+  claims: Claim[];
 
   @CreateDateColumn()
   createdAt: Date;

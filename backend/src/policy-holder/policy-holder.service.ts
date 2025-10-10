@@ -234,6 +234,21 @@ export class PolicyHolderService {
     return this.findOne(id);
   }
 
+  async findByPolicyNumber(policyNumber: string): Promise<PolicyHolder> {
+    const holder = await this.policyHolderRepository.findOne({
+      where: { policyNumber },
+      relations: ['agent', 'policyPlan', 'policyPlan.category'],
+    });
+
+    if (!holder) {
+      throw new NotFoundException(
+        `PolicyHolder with policy number ${policyNumber} not found`,
+      );
+    }
+
+    return holder;
+  }
+
   async remove(id: number): Promise<void> {
     const result = await this.policyHolderRepository.delete(id);
     if (result.affected === 0) {

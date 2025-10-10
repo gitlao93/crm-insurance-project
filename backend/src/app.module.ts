@@ -34,6 +34,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CommissionModule } from './comission/commission.module';
 import { Commission } from './comission/commisson.entities';
 import { ClaimModule } from './claim/claim.module';
+import { Claim } from './claim/claim.entities';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { ClaimModule } from './claim/claim.module';
         SOA,
         Billing,
         Commission,
+        Claim,
       ],
       synchronize: true, //in production change to false
       logging: false,

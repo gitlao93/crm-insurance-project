@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Container,
   Navbar,
@@ -8,17 +9,75 @@ import {
   Form,
   Card,
   Image,
+  Alert,
+  Spinner,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import {
+  policyHolderService,
+  type PolicyHolder,
+} from "../services/policyHolderService";
+type ClaimType = "Death" | "Burial" | "Accident" | "Hospitalization";
 
 export default function GoodlifeDamayanPage() {
   const navigate = useNavigate();
+  const [policyNumber, setPolicyNumber] = useState("");
+  const [policyHolder, setPolicyHolder] = useState<PolicyHolder | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [description, setDescription] = useState("");
+  // ✅ Make it non-nullable
+  const [selectedBenefits, setSelectedBenefits] = useState<
+    Partial<Record<ClaimType, number>>
+  >({});
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    if (!policyNumber) {
+      setPolicyHolder(null);
+
+      setError(null);
+      return;
+    }
+    console.log(policyNumber);
+    const timeout = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const data = await policyHolderService.findPolicyHolder(policyNumber);
+
+        setPolicyHolder(data);
+        setError(null);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+      } catch (err: any) {
+        setPolicyHolder(null);
+        setError("Policy number not found.");
+      } finally {
+        setLoading(false);
+      }
+    }, 700);
+
+    return () => clearTimeout(timeout);
+  }, [policyNumber]);
+
+  // ✅ Check if entered details match fetched policyholder
+  const infoMatch =
+    policyHolder &&
+    firstName.toLowerCase() === policyHolder.firstName.toLowerCase() &&
+    lastName.toLowerCase() === policyHolder.lastName.toLowerCase() &&
+    phoneNumber.toLowerCase() ===
+      (policyHolder.phoneNumber ?? "").toLowerCase() &&
+    email.toLowerCase() === (policyHolder.email ?? "").toLowerCase();
 
   return (
     <div>
@@ -345,89 +404,173 @@ export default function GoodlifeDamayanPage() {
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            First Name
+                            Policy Holders First Name
                           </Form.Label>
                           <Form.Control
                             type="text"
                             placeholder="Enter your first name"
                             size="lg"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Last Name
+                            Policy Holders Last Name
                           </Form.Label>
                           <Form.Control
                             type="text"
                             placeholder="Enter your last name"
                             size="lg"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Email Address
+                            Policy Holders Email Address
                           </Form.Label>
                           <Form.Control
                             type="email"
                             placeholder="your.email@example.com"
                             size="lg"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
+
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Phone Number
+                            Policy Holders Phone Number
                           </Form.Label>
                           <Form.Control
                             type="tel"
                             placeholder="+63 XXX XXX XXXX"
                             size="lg"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
+                      {policyHolder && !error && (
+                        <Col xs={12}>
+                          {infoMatch ? (
+                            <Alert variant="success">
+                              ✅ Your information matches our records.
+                            </Alert>
+                          ) : (
+                            <Alert variant="warning">
+                              ⚠️ Policy found, but your provided information
+                              doesn’t match our records.
+                            </Alert>
+                          )}
+                        </Col>
+                      )}
                       <Col xs={12}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Policy Number (if applicable)
+                            Policy Number
                           </Form.Label>
                           <Form.Control
                             type="text"
                             placeholder="Enter your policy number"
                             size="lg"
+                            value={policyNumber}
+                            onChange={(e) => setPolicyNumber(e.target.value)}
                           />
+                          {loading && (
+                            <Spinner
+                              animation="border"
+                              size="sm"
+                              className="mt-2"
+                            />
+                          )}
+                          {error && (
+                            <Alert variant="danger" className="mt-2">
+                              {error}
+                            </Alert>
+                          )}
+                          {policyHolder && !error && (
+                            <Alert variant="success" className="mt-2">
+                              ✅ Policy found
+                            </Alert>
+                          )}
                         </Form.Group>
                       </Col>
+                      {policyHolder?.policyPlan?.benefits && (
+                        <Col xs={12}>
+                          <Form.Group>
+                            <Form.Label className="fw-semibold">
+                              Eligible Benefits
+                            </Form.Label>
+                            <div className="d-flex flex-wrap gap-3">
+                              {Object.entries(
+                                policyHolder.policyPlan.benefits
+                              ).map(([benefit, amount]) => {
+                                const isChecked =
+                                  Object.prototype.hasOwnProperty.call(
+                                    selectedBenefits,
+                                    benefit
+                                  );
+
+                                return (
+                                  <Form.Check
+                                    key={benefit}
+                                    type="checkbox"
+                                    id={`benefit-${benefit}`}
+                                    label={`${benefit} — ₱${Number(
+                                      amount
+                                    ).toLocaleString()}`}
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      const typedBenefit = benefit as ClaimType;
+
+                                      if (e.target.checked) {
+                                        // ✅ Add
+                                        setSelectedBenefits((prev) => ({
+                                          ...prev,
+                                          [typedBenefit]: Number(amount),
+                                        }));
+                                      } else {
+                                        // ❌ Remove
+                                        setSelectedBenefits((prev) => {
+                                          const updated = { ...prev };
+                                          delete updated[typedBenefit];
+                                          return updated;
+                                        });
+                                      }
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      )}
+
+                      {/* --- ✅ Description Field --- */}
                       <Col xs={12}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Inquiry Type
-                          </Form.Label>
-                          <Form.Select size="lg">
-                            <option>Select an option</option>
-                            <option>File a Claim</option>
-                            <option>Request Information</option>
-                            <option>Policy Question</option>
-                            <option>General Inquiry</option>
-                          </Form.Select>
-                        </Form.Group>
-                      </Col>
-                      <Col xs={12}>
-                        <Form.Group>
-                          <Form.Label className="fw-semibold">
-                            Message
+                            Description
                           </Form.Label>
                           <Form.Control
                             as="textarea"
-                            rows={5}
-                            placeholder="Please provide details about your inquiry or claim..."
+                            rows={4}
+                            placeholder="Provide more details about your claim..."
+                            size="lg"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
+
                       <Col xs={12}>
                         <Button variant="dark" size="lg" className="w-100">
                           Submit Request

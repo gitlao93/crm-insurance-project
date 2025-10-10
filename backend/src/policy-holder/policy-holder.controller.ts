@@ -60,3 +60,15 @@ export class PolicyHolderController {
     return this.policyHolderService.remove(id);
   }
 }
+
+@Controller('policy-holder')
+export class PublicPolicyHolderController {
+  constructor(private readonly policyHolderService: PolicyHolderService) {}
+
+  @Get('policy/:policyNumber')
+  findByPolicyNumber(
+    @Param('policyNumber') policyNumber: string,
+  ): Promise<PolicyHolder> {
+    return this.policyHolderService.findByPolicyNumber(policyNumber);
+  }
+}
