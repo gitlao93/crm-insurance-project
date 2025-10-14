@@ -32,11 +32,14 @@ export class Claim {
 
   // 🎯 CLAIM TYPE
   @Column({ type: 'json', nullable: true })
-  claimType: Record<ClaimType, number>;
+  claimType: Partial<Record<ClaimType, number>>;
 
   // 🧾 DESCRIPTION / NOTES
   @Column({ type: 'text', nullable: true })
   description?: string;
+
+  @Column({ type: 'text', nullable: true })
+  remarks?: string;
 
   // 📅 DATE OF CLAIM (filed by policyholder)
   @Column({ type: 'timestamp' })

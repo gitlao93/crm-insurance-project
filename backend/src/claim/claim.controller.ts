@@ -25,8 +25,11 @@ export class ClaimController {
 
   // ✅ Get All (optional ?policyHolderId=)
   @Get()
-  findAll(@Query('policyHolderId') policyHolderId?: number) {
-    return this.claimService.findAll(policyHolderId);
+  findAll(
+    @Query('policyHolderId') policyHolderId?: number,
+    @Query('agencyId') agencyId?: number,
+  ) {
+    return this.claimService.findAll(agencyId, policyHolderId);
   }
 
   // ✅ Get One

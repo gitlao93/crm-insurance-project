@@ -13,6 +13,7 @@ import AgencySetting from "./pages/AgencySetting";
 import PolicyHolderSoa from "./pages/PolicyHolderSoa";
 import Commission from "./pages/Commission";
 import Home from "./pages/Home";
+import ClaimRequest from "./pages/ClaimRequest";
 
 function App() {
   return (
@@ -34,6 +35,14 @@ function App() {
             element={
               <PrivateRoute>
                 <User />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="claim-request"
+            element={
+              <PrivateRoute>
+                <ClaimRequest />
               </PrivateRoute>
             }
           />

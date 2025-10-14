@@ -41,6 +41,13 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
+    title: "Claim Request",
+    icon: "paperclip",
+    link: "/claim-request",
+    roles: ["admin"], // 👈 only admin can see
+  },
+  {
+    id: uuid(),
     title: "Policy Category",
     icon: "file-text",
     link: "/policy-category",

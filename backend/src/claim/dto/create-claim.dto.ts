@@ -28,4 +28,15 @@ export class CreateClaimDto {
   @IsOptional()
   @IsEnum(ClaimStatus)
   status?: ClaimStatus;
+
+  @IsOptional()
+  @IsDateString()
+  dateProcessed?: Date;
+
+  @IsOptional()
+  processedBy?: number;
+
+  @IsOptional()
+  @IsString()
+  remarks?: string;
 }

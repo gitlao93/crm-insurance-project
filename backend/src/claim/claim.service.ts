@@ -36,11 +36,27 @@ export class ClaimService {
   }
 
   // ✅ Find All Claims (optional filters)
-  async findAll(policyHolderId?: number): Promise<Claim[]> {
+  async findAll(agencyId?: number, policyHolderId?: number): Promise<Claim[]> {
     if (policyHolderId) {
       return this.claimRepository.find({
         where: { policyHolder: { id: policyHolderId } },
-        relations: ['policyHolder', 'policyHolder.policyPlan'],
+        relations: [
+          'policyHolder',
+          'policyHolder.policyPlan',
+          'policyHolder.agent',
+        ],
+        order: { createdAt: 'DESC' },
+      });
+    }
+
+    if (agencyId) {
+      return this.claimRepository.find({
+        where: { policyHolder: { agencyId: agencyId } },
+        relations: [
+          'policyHolder',
+          'policyHolder.policyPlan',
+          'policyHolder.agent',
+        ],
         order: { createdAt: 'DESC' },
       });
     }

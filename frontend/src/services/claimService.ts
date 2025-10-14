@@ -33,6 +33,8 @@ export interface Claim {
   createdAt: string;
   updatedAt: string;
   processedBy?: User | null;
+  dateProcessed?: Date | null;
+  remarks?: string | null;
 }
 
 export interface CreateClaimRequest {
@@ -43,8 +45,10 @@ export interface CreateClaimRequest {
 }
 
 export type UpdateClaimRequest = Partial<CreateClaimRequest> & {
-  status?: ClaimStatus;
-  amountApproved?: number;
+  processedBy: number;
+  status: ClaimStatus;
+  remarks?: string | null;
+  dateProcessed: Date;
 };
 
 /** -------------------------------
@@ -58,10 +62,16 @@ export const claimService = {
   },
 
   // ✅ Get all claims (optionally filtered by policyHolderId)
-  async getClaims(policyHolderId?: number): Promise<Claim[]> {
-    const { data } = await api.get<Claim[]>("/claims", {
-      params: policyHolderId ? { policyHolderId } : {},
-    });
+  async getClaims(
+    agencyId?: number,
+    policyHolderId?: number
+  ): Promise<Claim[]> {
+    const params: Record<string, number> = {};
+
+    if (agencyId) params.agencyId = agencyId;
+    if (policyHolderId) params.policyHolderId = policyHolderId;
+
+    const { data } = await api.get<Claim[]>("/claims", { params });
     return data;
   },
 
@@ -74,6 +84,7 @@ export const claimService = {
   // ✅ Update a claim (approve, reject, edit, etc.)
   async updateClaim(id: number, payload: UpdateClaimRequest): Promise<Claim> {
     const { data } = await api.patch<Claim>(`/claims/${id}`, payload);
+    console.log("Updated claim data:", data);
     return data;
   },
 
