@@ -13,15 +13,26 @@ export class DashboardController {
     return this.dashboardService.getPolicyHoldersByAgent();
   }
 
-  // ✅ Policy holders created per month (this year)
-  @Get('policies-by-month')
-  async getPoliciesByMonth() {
-    return this.dashboardService.getPoliciesByMonth();
-  }
-
-  // ✅ Summary counts (useful for dashboard cards)
   @Get('summary')
   async getSummary() {
     return this.dashboardService.getSummary();
+  }
+
+  /** 🔹 Monthly Sales Trend (Policies Sold per Month) */
+  @Get('sales-trend')
+  async getSalesTrend() {
+    return this.dashboardService.getSalesTrend();
+  }
+
+  /** 🔹 Top Performing Agents */
+  @Get('top-agents')
+  async getTopAgents() {
+    return this.dashboardService.getTopAgents();
+  }
+
+  /** 🔹 Lead Conversion Data */
+  @Get('lead-conversion')
+  async getLeadConversion() {
+    return this.dashboardService.getLeadConversion();
   }
 }

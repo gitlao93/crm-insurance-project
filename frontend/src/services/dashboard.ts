@@ -13,4 +13,19 @@ export const dashboardService = {
     const res = await api.get("/dashboard/summary");
     return res.data;
   },
+
+  async getSalesTrend() {
+    const { data } = await api.get("/dashboard/sales-trend");
+    return data;
+  },
+
+  async getTopAgents() {
+    const { data } = await api.get("/dashboard/top-agents");
+    return data;
+  },
+
+  async getLeadConversion() {
+    const { data } = await api.get("/dashboard/lead-conversion");
+    return data;
+  },
 };
