@@ -37,7 +37,7 @@ export interface Claim {
 
 export interface CreateClaimRequest {
   policyHolderId: number;
-  claimType: Partial<ClaimType>;
+  claimType: Partial<Record<ClaimType, number>>;
   description?: string;
   dateFiled: Date;
 }

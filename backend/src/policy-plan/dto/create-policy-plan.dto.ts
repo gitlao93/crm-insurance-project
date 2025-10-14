@@ -53,5 +53,5 @@ export class CreatePolicyPlanDto {
 
   @IsOptional()
   @IsObject({ message: 'benefits must be a valid JSON object' })
-  benefits?: Record<ClaimType, number>;
+  benefits: Record<ClaimType, number>;
 }

@@ -71,6 +71,6 @@ export class PolicyPlan {
   @Column({ type: 'varchar', nullable: true })
   description: string;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'json' })
   benefits: Record<ClaimType, number>;
 }
