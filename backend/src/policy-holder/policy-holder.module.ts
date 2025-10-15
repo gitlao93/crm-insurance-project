@@ -12,6 +12,8 @@ import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
 import { SoaModule } from 'src/soa/soa.module';
 import { Billing } from 'src/billing/billing.entities';
 import { Claim } from 'src/claim/claim.entities';
+import { Quota } from 'src/quota/entities/quota.entity';
+import { QuotaModule } from 'src/quota/quota.module';
 
 @Module({
   imports: [
@@ -22,8 +24,10 @@ import { Claim } from 'src/claim/claim.entities';
       PolicyPlan,
       Billing,
       Claim,
+      Quota,
     ]),
     SoaModule,
+    QuotaModule,
   ],
   providers: [PolicyHolderService],
   controllers: [PolicyHolderController, PublicPolicyHolderController],

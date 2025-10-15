@@ -35,6 +35,9 @@ import { CommissionModule } from './comission/commission.module';
 import { Commission } from './comission/commisson.entities';
 import { ClaimModule } from './claim/claim.module';
 import { Claim } from './claim/claim.entities';
+import { QuotaModule } from './quota/quota.module';
+import { Quota } from './quota/entities/quota.entity';
+import { AgentQuota } from './quota/entities/agent-quota.entity';
 
 @Module({
   imports: [
@@ -64,6 +67,8 @@ import { Claim } from './claim/claim.entities';
         Billing,
         Commission,
         Claim,
+        Quota,
+        AgentQuota,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -85,6 +90,7 @@ import { Claim } from './claim/claim.entities';
     BillingModule,
     CommissionModule,
     ClaimModule,
+    QuotaModule,
   ],
   controllers: [],
   providers: [],

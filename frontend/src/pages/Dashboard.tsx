@@ -41,6 +41,15 @@ interface LeadConversion {
   count: number;
 }
 
+interface SalesPerformance {
+  agentId: number;
+  agentName: string;
+  policiesSold: number;
+  leadsConverted: number;
+  quotaPercentage: number;
+  rank: number;
+}
+
 // ==========================
 // 🚀 Component
 // ==========================
@@ -50,6 +59,9 @@ export default function Dashboard() {
   const [topAgents, setTopAgents] = useState<TopAgent[]>([]);
   const [leadConversion, setLeadConversion] = useState<LeadConversion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [salesPerformance, setSalesPerformance] = useState<SalesPerformance[]>(
+    []
+  );
 
   ChartJS.register(
     CategoryScale,
@@ -67,16 +79,19 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [summaryRes, salesRes, agentsRes, leadRes] = await Promise.all([
-          dashboardService.getSummary(),
-          dashboardService.getSalesTrend(),
-          dashboardService.getTopAgents(),
-          dashboardService.getLeadConversion(),
-        ]);
+        const [summaryRes, salesRes, agentsRes, leadRes, performanceRes] =
+          await Promise.all([
+            dashboardService.getSummary(),
+            dashboardService.getSalesTrend(),
+            dashboardService.getTopAgents(),
+            dashboardService.getLeadConversion(),
+            dashboardService.getSalesPerformance(), // 🆕 new
+          ]);
 
         setSummary(summaryRes);
         setSalesTrend(salesRes);
         setTopAgents(agentsRes);
+        setSalesPerformance(performanceRes);
 
         // ✅ Make sure leadRes is an array
         // setLeadConversion(Array.isArray(leadRes) ? leadRes : []);
@@ -152,6 +167,24 @@ export default function Dashboard() {
     ],
   };
 
+  const pieOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom" as const, // 👈 change this
+        labels: {
+          boxWidth: 20,
+          padding: 15,
+          color: "#333",
+        },
+      },
+      title: {
+        display: false,
+      },
+    },
+  };
+
   const handleExport = () => {
     // 🧾 1️⃣ KPI Summary Sheet
     const summarySheet = XLSX.utils.json_to_sheet([
@@ -188,12 +221,23 @@ export default function Dashboard() {
       }))
     );
 
+    const performanceSheet = XLSX.utils.json_to_sheet(
+      salesPerformance.map((p) => ({
+        Rank: p.rank,
+        Agent: p.agentName,
+        "Policies Sold": p.policiesSold,
+        "Leads Converted": p.leadsConverted,
+        "Quota %": `${p.quotaPercentage}%`,
+      }))
+    );
+
     // 📘 Create Workbook
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, summarySheet, "KPI Summary");
     XLSX.utils.book_append_sheet(wb, salesSheet, "Sales Trend");
     XLSX.utils.book_append_sheet(wb, agentsSheet, "Top Agents");
     XLSX.utils.book_append_sheet(wb, leadSheet, "Lead Conversion");
+    XLSX.utils.book_append_sheet(wb, performanceSheet, "Sales Performance");
 
     // 💾 Export File
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -206,7 +250,13 @@ export default function Dashboard() {
   return (
     <Container fluid className="p-4">
       <PageHeading heading="Dashboard Overview" />
-
+      <Row className="mb-3">
+        <Col className="text-end">
+          <Button className="btn btn-success" onClick={handleExport}>
+            Export Dashboard Data
+          </Button>
+        </Col>
+      </Row>
       {/* Summary Cards */}
       <Row className="mt-4">
         <Col md={3}>
@@ -242,13 +292,7 @@ export default function Dashboard() {
           </Card>
         </Col>
       </Row>
-      <Row className="mb-3">
-        <Col className="text-end">
-          <Button className="btn btn-success" onClick={handleExport}>
-            Export Dashboard Data
-          </Button>
-        </Col>
-      </Row>
+
       {/* Charts Row */}
       <Row className="mt-3">
         {/* Line Chart */}
@@ -273,7 +317,49 @@ export default function Dashboard() {
         <Col md={4} className="mb-4">
           <Card className="shadow-sm p-3">
             <Card.Title>🎯 Lead Conversion Rate</Card.Title>
-            <Pie data={leadData} />
+            <div style={{ width: "250px", height: "250px", margin: "0 auto" }}>
+              <Pie data={leadData} options={pieOptions} />
+            </div>
+          </Card>
+        </Col>
+      </Row>
+      {/* Sales Performance Report */}
+      <Row className="mt-4">
+        <Col>
+          <Card className="shadow-sm p-3">
+            <Card.Title>📊 Sales Performance Report</Card.Title>
+            <div className="table-responsive mt-3">
+              <table className="table table-striped align-middle">
+                <thead className="table-dark">
+                  <tr>
+                    <th scope="col">Rank</th>
+                    <th scope="col">Agent</th>
+                    <th scope="col">Policies Sold</th>
+                    <th scope="col">Leads Converted</th>
+                    <th scope="col">Quota %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salesPerformance.length > 0 ? (
+                    salesPerformance.map((row, index) => (
+                      <tr key={row.agentId}>
+                        <td>{index + 1}</td>
+                        <td>{row.agentName}</td>
+                        <td>{row.policiesSold}</td>
+                        <td>{row.leadsConverted}</td>
+                        <td>{Number(row.quotaPercentage ?? 0).toFixed(2)}%</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="text-center text-muted py-3">
+                        No performance data available.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </Card>
         </Col>
       </Row>

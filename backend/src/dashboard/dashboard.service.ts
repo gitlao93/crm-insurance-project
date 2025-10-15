@@ -6,6 +6,8 @@ import { User, UserRole } from '../user/user.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
 import { Lead, LeadStatus } from 'src/lead/lead.entities';
 import { Claim } from 'src/claim/claim.entities';
+import { Quota } from 'src/quota/entities/quota.entity';
+import { AgentQuota } from 'src/quota/entities/agent-quota.entity';
 
 @Injectable()
 export class DashboardService {
@@ -16,8 +18,14 @@ export class DashboardService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(PolicyPlan)
     private policyPlanRepo: Repository<PolicyPlan>,
-    @InjectRepository(Lead) private leadRepo: Repository<Lead>,
-    @InjectRepository(Claim) private claimRepo: Repository<Claim>,
+    @InjectRepository(Lead)
+    private leadRepo: Repository<Lead>,
+    @InjectRepository(Claim)
+    private claimRepo: Repository<Claim>,
+    @InjectRepository(Quota)
+    private quotaRepo: Repository<Quota>,
+    @InjectRepository(AgentQuota)
+    private agentQuotaRepo: Repository<AgentQuota>,
   ) {}
 
   // ✅ 1. Number of PolicyHolders grouped by Agent
@@ -135,5 +143,75 @@ export class DashboardService {
         { name: 'Dropped', value: dropped },
       ],
     };
+  }
+
+  /** 🔹 Sales Performance Report Table */
+  async getSalesPerformance() {
+    const agents = await this.userRepo.find({
+      where: { role: UserRole.AGENT },
+    });
+
+    // Get current month and year
+    const now = new Date();
+    const month = now.getMonth() + 1; // 1–12
+    const year = now.getFullYear();
+
+    // ✅ safely find quota
+    const quota = await this.quotaRepo.findOne({
+      where: { month, year },
+    });
+
+    if (!quota) {
+      // If no quota found, still return basic report
+      return agents.map((agent, i) => ({
+        agentId: agent.id,
+        agentName: `${agent.firstName} ${agent.lastName}`,
+        policiesSold: 0,
+        leadsConverted: 0,
+        quotaPercentage: 0,
+        rank: i + 1,
+      }));
+    }
+
+    const report: {
+      agentId: number;
+      agentName: string;
+      policiesSold: number;
+      leadsConverted: number;
+      quotaPercentage: number;
+      rank?: number;
+    }[] = [];
+
+    for (const agent of agents) {
+      const policiesSold = await this.policyHolderRepo.count({
+        where: { agent: { id: agent.id } },
+      });
+
+      const leadsConverted = await this.leadRepo.count({
+        where: { agent: { id: agent.id }, status: LeadStatus.CONVERTED },
+      });
+
+      const agentQuota = await this.agentQuotaRepo.findOne({
+        where: { quota: { id: quota.id }, agent: { id: agent.id } },
+      });
+
+      const quotaPercentage = agentQuota?.achievementRate ?? 0;
+
+      report.push({
+        agentId: agent.id,
+        agentName: `${agent.firstName} ${agent.lastName}`,
+        policiesSold,
+        leadsConverted,
+        quotaPercentage,
+      });
+    }
+
+    // Sort by policies sold (or any metric you prefer)
+    report.sort((a, b) => b.policiesSold - a.policiesSold);
+
+    // Add ranking
+    report.forEach((r, idx) => (r.rank = idx + 1));
+
+    return report;
   }
 }

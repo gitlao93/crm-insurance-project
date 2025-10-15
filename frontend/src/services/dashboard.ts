@@ -28,4 +28,10 @@ export const dashboardService = {
     const { data } = await api.get("/dashboard/lead-conversion");
     return data;
   },
+
+  /** 🆕 Sales Performance Report Table */
+  async getSalesPerformance() {
+    const { data } = await api.get("/dashboard/sales-performance");
+    return data;
+  },
 };

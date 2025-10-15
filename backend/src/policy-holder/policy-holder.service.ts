@@ -16,6 +16,7 @@ import { SOA } from 'src/soa/soa.entities';
 import { Billing, BillingStatus } from 'src/billing/billing.entities';
 import { addMonths, addYears } from 'date-fns';
 import { Commission } from 'src/comission/commisson.entities';
+import { QuotaService } from 'src/quota/quota.service';
 
 @Injectable()
 export class PolicyHolderService {
@@ -32,6 +33,8 @@ export class PolicyHolderService {
     private readonly soaService: SoaService,
 
     private readonly dataSource: DataSource,
+
+    private readonly quotaService: QuotaService,
   ) {}
 
   async create(
@@ -157,6 +160,15 @@ export class PolicyHolderService {
 
       // 7️⃣ Commit transaction
       await queryRunner.commitTransaction();
+
+      if (dto.agentId) {
+        console.log('Updating quota for agent:', dto.agentId);
+        try {
+          await this.quotaService.updateAgentPerformance(dto.agentId);
+        } catch (quotaError) {
+          console.warn('⚠️ Failed to update agent quota:', quotaError);
+        }
+      }
 
       // 8️⃣ Return created holder with relations
       const createdHolder = await this.policyHolderRepository.findOne({

@@ -35,4 +35,10 @@ export class DashboardController {
   async getLeadConversion() {
     return this.dashboardService.getLeadConversion();
   }
+
+  /** 🔹 Sales Performance Report Table */
+  @Get('sales-performance')
+  async getSalesPerformance() {
+    return this.dashboardService.getSalesPerformance();
+  }
 }
