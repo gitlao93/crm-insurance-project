@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PolicyHolder } from '../policy-holder/policy-holder.entities';
+import { In, Repository } from 'typeorm';
+import {
+  PolicyHolder,
+  PolicyHolderStatus,
+} from '../policy-holder/policy-holder.entities';
 import { User, UserRole } from '../user/user.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
 import { Lead, LeadStatus } from 'src/lead/lead.entities';
@@ -213,5 +216,153 @@ export class DashboardService {
     report.forEach((r, idx) => (r.rank = idx + 1));
 
     return report;
+  }
+
+  // src/dashboard/dashboard.service.ts
+  async getCollectionSummary(
+    supervisorId: number,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    // 1. Get all agents under the supervisor
+    const agents = await this.userRepo.find({
+      where: { supervisorId, role: UserRole.AGENT },
+    });
+
+    if (agents.length === 0) {
+      return { lapsable: 0, lapsed: 0, tcpPercent: 0, dapPercent: 0 };
+    }
+
+    const agentIds = agents.map((a) => a.id);
+
+    // 2. Get all policyholders under those agents
+    const policyholders = await this.policyHolderRepo.find({
+      where: { agentId: In(agentIds) },
+      relations: ['soa', 'soa.billings'],
+    });
+
+    if (policyholders.length === 0) {
+      return { lapsable: 0, lapsed: 0, tcpPercent: 0, dapPercent: 0 };
+    }
+
+    // Initialize accumulators
+    let totalAmountPaid = 0;
+    let totalContractPrice = 0;
+    const lapsableSet = new Set<number>();
+    const lapsedSet = new Set<number>();
+
+    const today = new Date();
+    const lapsableThreshold = new Date();
+    lapsableThreshold.setDate(today.getDate() + 5); // 5 days ahead
+
+    // Determine default period for DAP%
+    const periodStart = startDate
+      ? new Date(startDate)
+      : new Date(today.getFullYear(), today.getMonth(), 1);
+    const periodEnd = endDate
+      ? new Date(endDate)
+      : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    let totalPaidInPeriod = 0;
+    let totalDueInPeriod = 0;
+
+    for (const holder of policyholders) {
+      const billings = holder.soa?.billings || [];
+
+      for (const b of billings) {
+        const amount = Number(b.amount);
+        const paid = Number(b.amountPaid);
+        const dueDate = new Date(b.dueDate);
+
+        totalAmountPaid += paid;
+        totalContractPrice += amount;
+
+        // LAPSABLE: due within next 5 days, unpaid
+        if (paid < amount && dueDate >= today && dueDate <= lapsableThreshold) {
+          lapsableSet.add(holder.id);
+        }
+
+        // LAPSED: due date passed, unpaid
+        if (paid < amount && dueDate < today) {
+          lapsedSet.add(holder.id);
+        }
+
+        // DAP%: payments and dues within the selected period
+        if (dueDate >= periodStart && dueDate <= periodEnd) {
+          totalPaidInPeriod += paid;
+          totalDueInPeriod += amount;
+        }
+      }
+    }
+
+    // Calculate percentages
+    const tcpPercent =
+      totalContractPrice > 0 ? (totalAmountPaid / totalContractPrice) * 100 : 0;
+    const dapPercent =
+      totalDueInPeriod > 0 ? (totalPaidInPeriod / totalDueInPeriod) * 100 : 0;
+
+    return {
+      lapsable: lapsableSet.size,
+      lapsed: lapsedSet.size,
+      tcpPercent: Number(tcpPercent.toFixed(2)),
+      dapPercent: Number(dapPercent.toFixed(2)),
+    };
+  }
+
+  async getInstallmentRecoveryPercentage(
+    supervisorId: number,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    // Step 1: Get all agents under the supervisor
+    const agents = await this.userRepo.find({
+      where: { supervisorId },
+    });
+
+    if (agents.length === 0) {
+      return { message: 'No agents found', irPercentage: 0 };
+    }
+
+    const agentIds = agents.map((a) => a.id);
+
+    // Step 2: Get policyholders under those agents with LAPSABLE or LAPSED status
+    const policyholders = await this.policyHolderRepo.find({
+      where: {
+        agentId: In(agentIds),
+        status: In([PolicyHolderStatus.LAPSABLE, PolicyHolderStatus.LAPSED]),
+      },
+      relations: ['soa', 'soa.billings'],
+    });
+
+    let totalAmountDue = 0;
+    let totalAmountPaid = 0;
+
+    // Step 3: Loop through billings
+    for (const ph of policyholders) {
+      for (const billing of ph.soa?.billings || []) {
+        // Optionally filter by date range
+        if (
+          startDate &&
+          endDate &&
+          (billing.dueDate < new Date(startDate) ||
+            billing.dueDate > new Date(endDate))
+        ) {
+          continue;
+        }
+
+        totalAmountDue += Number(billing.amount);
+        totalAmountPaid += Number(billing.amountPaid);
+      }
+    }
+
+    // Step 4: Compute IR%
+    const irPercentage =
+      totalAmountDue > 0 ? (totalAmountPaid / totalAmountDue) * 100 : 0;
+
+    return {
+      irPercentage: Number(irPercentage.toFixed(2)),
+      totalAmountPaid,
+      totalAmountDue,
+    };
   }
 }

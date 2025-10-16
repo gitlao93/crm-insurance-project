@@ -17,10 +17,17 @@ import {
 import { dashboardService } from "../services/dashboard";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { UserRole } from "../services/userService";
 
 // ==========================
 // 📘 Types
 // ==========================
+interface DashboardSummary2 {
+  lapsable: number;
+  lapsed: number;
+  tcpPercent: number;
+  dapPercent: number;
+}
 interface DashboardSummary {
   totalHolders: number;
   totalAgents: number;
@@ -54,6 +61,10 @@ interface SalesPerformance {
 // 🚀 Component
 // ==========================
 export default function Dashboard() {
+  const storedUser = localStorage.getItem("user") ?? "";
+  const userObj = JSON.parse(storedUser);
+  const supervisorId =
+    userObj.role === UserRole.COLLECTION_SUPERVISOR ? userObj.id : 0;
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [salesTrend, setSalesTrend] = useState<SalesTrend[]>([]);
   const [topAgents, setTopAgents] = useState<TopAgent[]>([]);
@@ -62,6 +73,43 @@ export default function Dashboard() {
   const [salesPerformance, setSalesPerformance] = useState<SalesPerformance[]>(
     []
   );
+
+  const [summary2, setSummary2] = useState<DashboardSummary2 | null>(null);
+  const [startDate, setStartDate] = useState("2025-10-01");
+  const [endDate, setEndDate] = useState("2025-10-30");
+  const [irData, setIRData] = useState<{ irPercentage: number }>({
+    irPercentage: 0,
+  });
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (supervisorId === 0) return;
+        const data = await dashboardService.getCollectionSummary(
+          supervisorId,
+          startDate,
+          endDate
+        );
+        setSummary2(data);
+      } catch (error) {
+        console.error("Failed to load collection summary:", error);
+      }
+    };
+    loadData();
+  }, [supervisorId, startDate, endDate]);
+
+  useEffect(() => {
+    const loadIR = async () => {
+      if (!supervisorId) return;
+      const data = await dashboardService.getInstallmentRecovery(
+        supervisorId,
+        startDate,
+        endDate
+      );
+      setIRData(data);
+    };
+    loadIR();
+  }, [supervisorId, startDate, endDate]);
 
   ChartJS.register(
     CategoryScale,
@@ -363,6 +411,15 @@ export default function Dashboard() {
           </Card>
         </Col>
       </Row>
+      {/* for collection supervisor */}
+      <div>
+        <h2>Collection Summary</h2>
+        <p>Lapsable: {summary2?.lapsable}</p>
+        <p>Lapsed: {summary2?.lapsed}</p>
+        <p>TCP%: {summary2?.tcpPercent}%</p>
+        <p>DAP%: {summary2?.dapPercent}%</p>
+        <p>Installment Recovery Rate: {irData.irPercentage}%</p>
+      </div>
     </Container>
   );
 }

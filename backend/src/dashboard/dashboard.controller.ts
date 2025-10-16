@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -40,5 +40,31 @@ export class DashboardController {
   @Get('sales-performance')
   async getSalesPerformance() {
     return this.dashboardService.getSalesPerformance();
+  }
+
+  @Get('collection-summary')
+  getCollectionSummary(
+    @Query('supervisorId') supervisorId: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.dashboardService.getCollectionSummary(
+      supervisorId,
+      startDate,
+      endDate,
+    );
+  }
+
+  @Get('collection-ir-percentage')
+  async getInstallmentRecovery(
+    @Query('supervisorId') supervisorId: number,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.dashboardService.getInstallmentRecoveryPercentage(
+      supervisorId,
+      startDate,
+      endDate,
+    );
   }
 }

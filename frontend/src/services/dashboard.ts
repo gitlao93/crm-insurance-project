@@ -34,4 +34,36 @@ export const dashboardService = {
     const { data } = await api.get("/dashboard/sales-performance");
     return data;
   },
+
+  async getCollectionSummary(
+    supervisorId: number,
+    startDate: string,
+    endDate: string
+  ) {
+    const params = new URLSearchParams();
+    params.append("supervisorId", supervisorId.toString());
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const { data } = await api.get(
+      `/dashboard/collection-summary?${params.toString()}`
+    );
+    return data;
+  },
+
+  async getInstallmentRecovery(
+    supervisorId: number,
+    startDate: string,
+    endDate: string
+  ) {
+    const params = new URLSearchParams();
+    params.append("supervisorId", supervisorId.toString());
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const { data } = await api.get(
+      `/dashboard/collection-ir-percentage?${params.toString()}`
+    );
+    return data;
+  },
 };
