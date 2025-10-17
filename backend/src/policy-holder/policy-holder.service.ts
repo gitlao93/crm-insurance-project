@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from 'src/user/user.entities';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { PolicyHolder } from './policy-holder.entities';
 import { CreatePolicyHolderDto } from './dto/create-policy-holder.dto';
 import { UpdatePolicyHolderDto } from './dto/update-policy-holder.dto';
@@ -202,8 +202,18 @@ export class PolicyHolderService {
         ],
       });
     }
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (user && user.role === UserRole.AGENT) {
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['subordinates'], // ✅ include subordinate agents if supervisor
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // 🧑‍💼 AGENT → fetch own policyholders
+    if (user.role === UserRole.AGENT) {
       return this.policyHolderRepository.find({
         where: { agentId: userId },
         relations: [
@@ -216,7 +226,8 @@ export class PolicyHolderService {
       });
     }
 
-    if (user && user.role === UserRole.ADMIN) {
+    // 🧑‍💼 ADMIN → fetch all policyholders in same agency
+    if (user.role === UserRole.ADMIN) {
       return this.policyHolderRepository.find({
         where: { agencyId: user.agencyId },
         relations: [
@@ -228,6 +239,40 @@ export class PolicyHolderService {
         ],
       });
     }
+
+    // 👩‍💼 COLLECTION SUPERVISOR → fetch all policyholders under their agents
+    if (user.role === UserRole.COLLECTION_SUPERVISOR) {
+      // ✅ Get all subordinate agent IDs
+      const subordinateIds = user.subordinates?.map((a) => a.id) ?? [];
+
+      if (subordinateIds.length === 0) {
+        console.log(`Supervisor ${user.id} has no assigned agents`);
+        return [];
+      }
+
+      // ✅ Fetch policyholders under those agents
+      return this.policyHolderRepository.find({
+        where: { agentId: In(subordinateIds) },
+        relations: [
+          'agent',
+          'policyPlan',
+          'policyPlan.category',
+          'soa',
+          'soa.billings',
+        ],
+      });
+    }
+
+    // 🧩 Default fallback (e.g., SUPER_ADMIN)
+    return this.policyHolderRepository.find({
+      relations: [
+        'agent',
+        'policyPlan',
+        'policyPlan.category',
+        'soa',
+        'soa.billings',
+      ],
+    });
   }
 
   async findOne(id: number): Promise<PolicyHolder> {

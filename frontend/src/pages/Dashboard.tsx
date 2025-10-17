@@ -1,54 +1,39 @@
+// src/pages/Dashboard.tsx
 import { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Spinner, Button } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
 import PageHeading from "../widgets/PageHeading";
-import { Line, Bar, Pie } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import { dashboardService } from "../services/dashboard";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import { UserRole } from "../services/userService";
-
-// ==========================
-// 📘 Types
-// ==========================
-interface DashboardSummary2 {
+import DashboardAdmin from "../components/dashboards/DashboardAdmin.tsx";
+import DashboardCollectionSupervisor from "../components/dashboards/DashboardCollectionSupervisor.tsx";
+import DashboardAgent from "../components/dashboards/DashboardAgent.tsx";
+export interface DashboardSummary2 {
   lapsable: number;
   lapsed: number;
   tcpPercent: number;
   dapPercent: number;
 }
-interface DashboardSummary {
+export interface DashboardSummary {
   totalHolders: number;
   totalAgents: number;
   totalPlans: number;
   totalLeads: number;
   totalClaims: number;
 }
-interface SalesTrend {
+export interface SalesTrend {
   month: string;
   total: number;
 }
-interface TopAgent {
+export interface TopAgent {
   name: string;
   totalPolicies: number;
 }
-interface LeadConversion {
+export interface LeadConversion {
   status: string;
   count: number;
 }
 
-interface SalesPerformance {
+export interface SalesPerformance {
   agentId: number;
   agentName: string;
   policiesSold: number;
@@ -57,110 +42,117 @@ interface SalesPerformance {
   rank: number;
 }
 
-// ==========================
-// 🚀 Component
-// ==========================
+export interface dashboardData {
+  summary: DashboardSummary;
+  supSummary?: DashboardSummary2;
+  salesTrend: SalesTrend[];
+  topAgents: TopAgent[];
+  leadConversion: LeadConversion[];
+  performance: SalesPerformance[];
+  collectionSummary?: DashboardSummary2;
+  installmentRecovery?: {
+    irPercentage: number;
+  };
+}
+
 export default function Dashboard() {
   const storedUser = localStorage.getItem("user") ?? "";
-  const userObj = JSON.parse(storedUser);
-  const supervisorId =
-    userObj.role === UserRole.COLLECTION_SUPERVISOR ? userObj.id : 0;
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [salesTrend, setSalesTrend] = useState<SalesTrend[]>([]);
-  const [topAgents, setTopAgents] = useState<TopAgent[]>([]);
-  const [leadConversion, setLeadConversion] = useState<LeadConversion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [salesPerformance, setSalesPerformance] = useState<SalesPerformance[]>(
-    []
-  );
+  const user = JSON.parse(storedUser);
+  const role = user.role;
 
-  const [summary2, setSummary2] = useState<DashboardSummary2 | null>(null);
-  const [startDate, setStartDate] = useState("2025-10-01");
-  const [endDate, setEndDate] = useState("2025-10-30");
-  const [irData, setIRData] = useState<{ irPercentage: number }>({
-    irPercentage: 0,
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<dashboardData>({
+    summary: {
+      totalHolders: 0,
+      totalAgents: 0,
+      totalPlans: 0,
+      totalLeads: 0,
+      totalClaims: 0,
+    },
+    supSummary: {
+      lapsable: 0,
+      lapsed: 0,
+      tcpPercent: 0,
+      dapPercent: 0,
+    },
+    salesTrend: [],
+    topAgents: [],
+    leadConversion: [],
+    performance: [],
   });
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        if (supervisorId === 0) return;
-        const data = await dashboardService.getCollectionSummary(
-          supervisorId,
-          startDate,
-          endDate
-        );
-        setSummary2(data);
-      } catch (error) {
-        console.error("Failed to load collection summary:", error);
-      }
-    };
-    loadData();
-  }, [supervisorId, startDate, endDate]);
-
-  useEffect(() => {
-    const loadIR = async () => {
-      if (!supervisorId) return;
-      const data = await dashboardService.getInstallmentRecovery(
-        supervisorId,
-        startDate,
-        endDate
-      );
-      setIRData(data);
-    };
-    loadIR();
-  }, [supervisorId, startDate, endDate]);
-
-  ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    ArcElement,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-  );
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
         setLoading(true);
-        const [summaryRes, salesRes, agentsRes, leadRes, performanceRes] =
+        let summaryPromise: Promise<DashboardSummary>;
+
+        if (role === UserRole.AGENT) {
+          summaryPromise = dashboardService.getPolicyHoldersByAgent();
+        } else {
+          summaryPromise = dashboardService.getSummary();
+        }
+        const [summary, salesTrend, topAgents, leadRes, performance] =
           await Promise.all([
-            dashboardService.getSummary(),
+            summaryPromise,
+
             dashboardService.getSalesTrend(),
             dashboardService.getTopAgents(),
             dashboardService.getLeadConversion(),
-            dashboardService.getSalesPerformance(), // 🆕 new
+            dashboardService.getSalesPerformance(),
           ]);
+        // Optional supervisor data
+        let collectionSummary = null;
+        let installmentRecovery = null;
 
-        setSummary(summaryRes);
-        setSalesTrend(salesRes);
-        setTopAgents(agentsRes);
-        setSalesPerformance(performanceRes);
+        if (role === UserRole.COLLECTION_SUPERVISOR) {
+          collectionSummary = await dashboardService.getCollectionSummary(
+            user.id,
+            "2025-10-01",
+            "2025-10-30"
+          );
+          installmentRecovery = await dashboardService.getInstallmentRecovery(
+            user.id,
+            "2025-10-01",
+            "2025-10-30"
+          );
+        }
 
-        // ✅ Make sure leadRes is an array
-        // setLeadConversion(Array.isArray(leadRes) ? leadRes : []);
-        setLeadConversion(
-          Array.isArray(leadRes?.data)
-            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              leadRes.data.map((item: any) => ({
-                status: item.name,
-                count: item.value,
-              }))
-            : []
-        );
+        type RawLeadItem = {
+          name?: string;
+          value?: number;
+          status?: string;
+          count?: number;
+        };
+        const leadConversion = Array.isArray(leadRes?.data)
+          ? (leadRes.data as RawLeadItem[]).map((item) => ({
+              status: item.name || item.status || "Unknown",
+              count: item.value ?? item.count ?? 0,
+            }))
+          : Array.isArray(leadRes)
+          ? (leadRes as RawLeadItem[]).map((item) => ({
+              status: item.status || item.name || "Unknown",
+              count: item.count ?? item.value ?? 0,
+            }))
+          : [];
+        setDashboardData({
+          summary,
+          salesTrend,
+          topAgents,
+          leadConversion,
+          performance,
+          collectionSummary,
+          installmentRecovery,
+        });
       } catch (err) {
-        console.error("Failed to load dashboard:", err);
-        setLeadConversion([]); // prevent crash
+        console.error("Dashboard load error:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+
+    loadData();
+  }, [role, user.id]);
 
   if (loading)
     return (
@@ -170,256 +162,16 @@ export default function Dashboard() {
       </Container>
     );
 
-  // ================================
-  // 📈 Sales Trend (Line Chart)
-  // ================================
-  const salesData = {
-    labels: salesTrend.map((s) => s.month),
-    datasets: [
-      {
-        label: "Policies Sold",
-        data: salesTrend.map((s) => s.total),
-        borderColor: "#0d6efd",
-        backgroundColor: "rgba(13,110,253,0.2)",
-        tension: 0.3,
-      },
-    ],
-  };
-
-  // ================================
-  // 🧑‍💼 Top Agents (Bar Chart)
-  // ================================
-  const agentData = {
-    labels: topAgents.map((a) => a.name),
-    datasets: [
-      {
-        label: "Policies Sold",
-        data: topAgents.map((a) => a.totalPolicies),
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-        borderColor: "#4bc0c0",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  // ================================
-  // 🧭 Lead Conversion (Pie Chart)
-  // ================================
-  const leadData = {
-    labels: leadConversion.map((l) => l.status),
-    datasets: [
-      {
-        data: leadConversion.map((l) => l.count),
-        backgroundColor: ["#0d6efd", "#ffc107", "#28a745", "#dc3545"],
-      },
-    ],
-  };
-
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom" as const, // 👈 change this
-        labels: {
-          boxWidth: 20,
-          padding: 15,
-          color: "#333",
-        },
-      },
-      title: {
-        display: false,
-      },
-    },
-  };
-
-  const handleExport = () => {
-    // 🧾 1️⃣ KPI Summary Sheet
-    const summarySheet = XLSX.utils.json_to_sheet([
-      {
-        "Total Agents": summary?.totalAgents ?? 0,
-        "Policies Sold": summary?.totalHolders ?? 0,
-        "Claims Filed": summary?.totalClaims ?? 0,
-        "Leads Registered": summary?.totalLeads ?? 0,
-      },
-    ]);
-
-    // 📈 2️⃣ Sales Trend Sheet
-    const salesSheet = XLSX.utils.json_to_sheet(
-      salesTrend.map((s) => ({
-        Month: s.month,
-        "Policies Sold": s.total,
-      }))
-    );
-
-    // 🏆 3️⃣ Top Performing Agents Sheet
-    const agentsSheet = XLSX.utils.json_to_sheet(
-      topAgents.map((a, index) => ({
-        Rank: index + 1,
-        Agent: a.name,
-        "Policies Sold": a.totalPolicies,
-      }))
-    );
-
-    // 🎯 4️⃣ Lead Conversion Rate Sheet
-    const leadSheet = XLSX.utils.json_to_sheet(
-      leadConversion.map((l) => ({
-        Status: l.status,
-        Count: l.count,
-      }))
-    );
-
-    const performanceSheet = XLSX.utils.json_to_sheet(
-      salesPerformance.map((p) => ({
-        Rank: p.rank,
-        Agent: p.agentName,
-        "Policies Sold": p.policiesSold,
-        "Leads Converted": p.leadsConverted,
-        "Quota %": `${p.quotaPercentage}%`,
-      }))
-    );
-
-    // 📘 Create Workbook
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, summarySheet, "KPI Summary");
-    XLSX.utils.book_append_sheet(wb, salesSheet, "Sales Trend");
-    XLSX.utils.book_append_sheet(wb, agentsSheet, "Top Agents");
-    XLSX.utils.book_append_sheet(wb, leadSheet, "Lead Conversion");
-    XLSX.utils.book_append_sheet(wb, performanceSheet, "Sales Performance");
-
-    // 💾 Export File
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(
-      new Blob([wbout], { type: "application/octet-stream" }),
-      "Dashboard_Report.xlsx"
-    );
-  };
-
+  // 🔀 Render based on role
   return (
     <Container fluid className="p-4">
       <PageHeading heading="Dashboard Overview" />
-      <Row className="mb-3">
-        <Col className="text-end">
-          <Button className="btn btn-success" onClick={handleExport}>
-            Export Dashboard Data
-          </Button>
-        </Col>
-      </Row>
-      {/* Summary Cards */}
-      <Row className="mt-4">
-        <Col md={3}>
-          <Card className="shadow-sm text-center mb-3">
-            <Card.Body>
-              <Card.Title>Total Agents</Card.Title>
-              <h2>{summary?.totalAgents ?? 0}</h2>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="shadow-sm text-center mb-3">
-            <Card.Body>
-              <Card.Title>Total Policies</Card.Title>
-              <h2>{summary?.totalHolders ?? 0}</h2>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="shadow-sm text-center mb-3">
-            <Card.Body>
-              <Card.Title>Total Claims</Card.Title>
-              <h2>{summary?.totalClaims ?? 0}</h2>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="shadow-sm text-center mb-3">
-            <Card.Body>
-              <Card.Title>Total Leads</Card.Title>
-              <h2>{summary?.totalLeads ?? 0}</h2>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
 
-      {/* Charts Row */}
-      <Row className="mt-3">
-        {/* Line Chart */}
-
-        <Col md={4} className="mb-4">
-          <Card className="shadow-sm p-3">
-            <Card.Title>📈 Sales Trend</Card.Title>
-            <Line data={salesData} />
-          </Card>
-        </Col>
-
-        {/* Bar Chart */}
-        <Col md={4} className="mb-4">
-          <Card className="shadow-sm p-3">
-            <Card.Title>🏆 Top Performing Agents</Card.Title>
-            <Bar data={agentData} />
-          </Card>
-        </Col>
-
-        {/* Pie Chart */}
-
-        <Col md={4} className="mb-4">
-          <Card className="shadow-sm p-3">
-            <Card.Title>🎯 Lead Conversion Rate</Card.Title>
-            <div style={{ width: "250px", height: "250px", margin: "0 auto" }}>
-              <Pie data={leadData} options={pieOptions} />
-            </div>
-          </Card>
-        </Col>
-      </Row>
-      {/* Sales Performance Report */}
-      <Row className="mt-4">
-        <Col>
-          <Card className="shadow-sm p-3">
-            <Card.Title>📊 Sales Performance Report</Card.Title>
-            <div className="table-responsive mt-3">
-              <table className="table table-striped align-middle">
-                <thead className="table-dark">
-                  <tr>
-                    <th scope="col">Rank</th>
-                    <th scope="col">Agent</th>
-                    <th scope="col">Policies Sold</th>
-                    <th scope="col">Leads Converted</th>
-                    <th scope="col">Quota %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {salesPerformance.length > 0 ? (
-                    salesPerformance.map((row, index) => (
-                      <tr key={row.agentId}>
-                        <td>{index + 1}</td>
-                        <td>{row.agentName}</td>
-                        <td>{row.policiesSold}</td>
-                        <td>{row.leadsConverted}</td>
-                        <td>{Number(row.quotaPercentage ?? 0).toFixed(2)}%</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="text-center text-muted py-3">
-                        No performance data available.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-      {/* for collection supervisor */}
-      <div>
-        <h2>Collection Summary</h2>
-        <p>Lapsable: {summary2?.lapsable}</p>
-        <p>Lapsed: {summary2?.lapsed}</p>
-        <p>TCP%: {summary2?.tcpPercent}%</p>
-        <p>DAP%: {summary2?.dapPercent}%</p>
-        <p>Installment Recovery Rate: {irData.irPercentage}%</p>
-      </div>
+      {role === UserRole.ADMIN && <DashboardAdmin data={dashboardData} />}
+      {role === UserRole.COLLECTION_SUPERVISOR && (
+        <DashboardCollectionSupervisor data={dashboardData} />
+      )}
+      {role === UserRole.AGENT && <DashboardAgent data={dashboardData} />}
     </Container>
   );
 }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Lead, LeadStatus } from './lead.entities';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { User, UserRole } from 'src/user/user.entities';
 import { UpdateLeadDto } from './dto/update-lead.dto';
@@ -28,20 +28,55 @@ export class LeadService {
         relations: ['agent', 'policyPlan', 'interactions'],
       });
     }
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (user && user.role === UserRole.AGENT) {
+
+    // 🔍 Load user and their subordinates if supervisor
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['subordinates'], // include subordinate agents
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // 🧑‍💼 Agent → fetch own leads
+    if (user.role === UserRole.AGENT) {
       return this.leadRepository.find({
         where: { agentId: userId },
         relations: ['agent', 'policyPlan', 'interactions'],
       });
     }
 
-    if (user && user.role === UserRole.ADMIN) {
+    // 🧑‍💼 Admin → fetch leads in same agency
+    if (user.role === UserRole.ADMIN) {
       return this.leadRepository.find({
         where: { agencyId: user.agencyId },
         relations: ['agent', 'policyPlan', 'interactions'],
       });
     }
+
+    // 👩‍💼 Collection Supervisor → fetch leads from their agents
+    if (user.role === UserRole.COLLECTION_SUPERVISOR) {
+      const subordinateIds =
+        user.subordinates
+          ?.filter((agent) => agent.isActive)
+          .map((agent) => agent.id) ?? [];
+
+      if (subordinateIds.length === 0) {
+        console.log(`Supervisor ${user.id} has no active agents`);
+        return [];
+      }
+
+      return this.leadRepository.find({
+        where: { agentId: In(subordinateIds) },
+        relations: ['agent', 'policyPlan', 'interactions'],
+      });
+    }
+
+    // 👑 Super Admin or fallback → return all leads
+    return this.leadRepository.find({
+      relations: ['agent', 'policyPlan', 'interactions'],
+    });
   }
 
   async findOne(id: number): Promise<Lead> {
