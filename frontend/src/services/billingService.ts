@@ -76,4 +76,13 @@ export const billingService = {
   async remove(id: number): Promise<void> {
     await api.delete(`/billings/${id}`);
   },
+
+  async getNearDueBillings(userId: number, daysAhead: number = 5) {
+    console.log("Fetching near due billings with daysAhead:", daysAhead);
+    const res = await api.get(`/billings/near-due`, {
+      params: { userId, daysAhead },
+    });
+    console.log("Near due billings response:", res.data);
+    return res.data;
+  },
 };

@@ -14,6 +14,9 @@ import { SOA } from 'src/soa/soa.entities';
 import { isAfter } from 'date-fns';
 import { Billing, BillingStatus } from './billing.entities';
 import { CommissionService } from 'src/comission/commission.service';
+import { Between, In } from 'typeorm';
+import { addDays, startOfDay, endOfDay } from 'date-fns';
+import { User, UserRole } from 'src/user/user.entities';
 
 @Injectable()
 export class BillingService {
@@ -22,6 +25,9 @@ export class BillingService {
   constructor(
     @InjectRepository(Billing)
     private readonly billingRepo: Repository<Billing>,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
 
     @InjectRepository(SOA)
     private readonly soaRepo: Repository<SOA>,
@@ -109,6 +115,68 @@ export class BillingService {
       return BillingStatus.OVERDUE;
 
     return BillingStatus.PENDING;
+  }
+
+  async getNearDueBillings(
+    userId?: number,
+    daysAhead: number = 5,
+  ): Promise<Billing[]> {
+    console.log('userId:', userId);
+    if (!userId || isNaN(userId)) {
+      throw new Error('Invalid or missing userId in getNearDueBillings');
+    }
+    const now = new Date();
+    const upcomingDate = addDays(now, daysAhead);
+    console.log(upcomingDate, daysAhead);
+
+    // Get user to determine access
+    const user = userId
+      ? await this.userRepository.findOne({
+          where: { id: userId },
+          relations: ['subordinates'],
+        })
+      : null;
+
+    // 🟦 CASE 1: Super Admin or Admin - see all near due billings
+    if (!user || [UserRole.ADMIN].includes(user.role)) {
+      return this.billingRepo.find({
+        where: {
+          dueDate: Between(startOfDay(now), endOfDay(upcomingDate)),
+          status: In([BillingStatus.PENDING, BillingStatus.OVERDUE]),
+        },
+        relations: ['soa', 'soa.policyHolder', 'soa.policyHolder.agent'],
+      });
+    }
+
+    // 🟨 CASE 2: Supervisor - see all their agents' near due billings
+    if (user.role === UserRole.COLLECTION_SUPERVISOR) {
+      const agentIds = user.subordinates?.map((a) => a.id) ?? [];
+
+      if (agentIds.length === 0) return [];
+
+      return this.billingRepo.find({
+        where: {
+          dueDate: Between(startOfDay(now), endOfDay(upcomingDate)),
+          status: In([BillingStatus.PENDING, BillingStatus.OVERDUE]),
+          soa: { policyHolder: { agentId: In(agentIds) } },
+        },
+        relations: ['soa', 'soa.policyHolder', 'soa.policyHolder.agent'],
+      });
+    }
+
+    // 🟩 CASE 3: Agent - see only his own near due billings
+    if (user.role === UserRole.AGENT) {
+      return this.billingRepo.find({
+        where: {
+          dueDate: Between(startOfDay(now), endOfDay(upcomingDate)),
+          status: In([BillingStatus.PENDING, BillingStatus.OVERDUE]),
+          soa: { policyHolder: { agentId: user.id } },
+        },
+        relations: ['soa', 'soa.policyHolder', 'soa.policyHolder.agent'],
+      });
+    }
+
+    return [];
   }
 
   // 🕐 CRON JOB — runs daily at midnight
