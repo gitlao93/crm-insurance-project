@@ -5,10 +5,12 @@ export const dashboardService = {
     const res = await api.get("/dashboard/policyholders-by-agent");
     return res.data;
   },
+
   async getPoliciesByMonth() {
     const res = await api.get("/dashboard/policies-by-month");
     return res.data;
   },
+
   async getSummary() {
     const res = await api.get("/dashboard/summary");
     return res.data;
@@ -63,6 +65,32 @@ export const dashboardService = {
 
     const { data } = await api.get(
       `/dashboard/collection-ir-percentage?${params.toString()}`
+    );
+    return data;
+  },
+
+  /** 📊 NEW — Charts */
+
+  // 🔹 Bar Chart: Collections per Agent
+  async getCollectionsPerAgent(supervisorId: number) {
+    const { data } = await api.get(
+      `/dashboard/charts/collections-per-agent?supervisorId=${supervisorId}`
+    );
+    return data;
+  },
+
+  // 🔹 Pie Chart: Lapsed vs Active Policies
+  async getPolicyStatus(supervisorId: number) {
+    const { data } = await api.get(
+      `/dashboard/charts/policy-status?supervisorId=${supervisorId}`
+    );
+    return data;
+  },
+
+  // 🔹 Line Chart: Monthly Collection Trend
+  async getMonthlyCollectionTrend(supervisorId: number) {
+    const { data } = await api.get(
+      `/dashboard/charts/monthly-collection-trend?supervisorId=${supervisorId}`
     );
     return data;
   },

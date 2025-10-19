@@ -365,4 +365,92 @@ export class DashboardService {
       totalAmountDue,
     };
   }
+
+  async getCollectionsPerAgent(supervisorId: number) {
+    // Get all agents under this supervisor
+    const agents = await this.userRepo.find({
+      where: { supervisorId, role: UserRole.AGENT },
+    });
+
+    if (agents.length === 0) return [];
+
+    const agentIds = agents.map((a) => a.id);
+
+    // Fetch all policyholders and their SOA billings for these agents
+    const policyholders = await this.policyHolderRepo.find({
+      where: { agentId: In(agentIds) },
+      relations: ['soa', 'soa.billings'],
+    });
+
+    const collectionsMap: Record<number, number> = {};
+
+    for (const holder of policyholders) {
+      const agentId = holder.agentId;
+      const billings = holder.soa?.billings || [];
+
+      let totalPaid = 0;
+      for (const b of billings) {
+        totalPaid += Number(b.amountPaid) || 0;
+      }
+
+      collectionsMap[agentId] = (collectionsMap[agentId] || 0) + totalPaid;
+    }
+
+    // Format for frontend chart
+    return agents.map((agent) => ({
+      agentId: agent.id,
+      name: `${agent.firstName} ${agent.lastName}`,
+      totalCollection: Number(collectionsMap[agent.id] || 0),
+    }));
+  }
+
+  /** 🔹 Pie Chart: Lapsed vs Active Policies */
+  async getPolicyStatusDistribution(supervisorId: number) {
+    const agents = await this.userRepo.find({
+      where: { supervisorId, role: UserRole.AGENT },
+    });
+    if (agents.length === 0) return [];
+
+    const agentIds = agents.map((a) => a.id);
+
+    const totalActive = await this.policyHolderRepo.count({
+      where: { agentId: In(agentIds), status: PolicyHolderStatus.ACTIVE },
+    });
+
+    const totalLapsed = await this.policyHolderRepo.count({
+      where: { agentId: In(agentIds), status: PolicyHolderStatus.LAPSED },
+    });
+
+    return [
+      { name: 'Active', value: totalActive },
+      { name: 'Lapsed', value: totalLapsed },
+    ];
+  }
+
+  /** 🔹 Line Chart: Monthly Collection Trend */
+  async getMonthlyCollectionTrend(supervisorId: number) {
+    const agents = await this.userRepo.find({
+      where: { supervisorId, role: UserRole.AGENT },
+    });
+    if (agents.length === 0) return [];
+
+    const agentIds = agents.map((a) => a.id);
+
+    // Group collections by month (using TypeORM query builder)
+    const data = await this.policyHolderRepo
+      .createQueryBuilder('holder')
+      .leftJoin('holder.soa', 'soa')
+      .leftJoin('soa.billings', 'billing')
+      .select("DATE_FORMAT(billing.dueDate, '%Y-%m')", 'month')
+      .addSelect('SUM(billing.amountPaid)', 'totalPaid')
+      .where('holder.agentId IN (:...agentIds)', { agentIds })
+      .groupBy('month')
+      .orderBy('month', 'ASC')
+      .getRawMany<{ month: string; totalPaid: string }>();
+
+    return data.map((d) => ({
+      month: d.month,
+      total: Number(d.totalPaid || 0),
+    }));
+  }
 }

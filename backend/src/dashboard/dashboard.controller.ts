@@ -18,6 +18,21 @@ export class DashboardController {
     return this.dashboardService.getSummary();
   }
 
+  @Get('charts/collections-per-agent')
+  getCollectionsPerAgent(@Query('supervisorId') supervisorId: number) {
+    return this.dashboardService.getCollectionsPerAgent(supervisorId);
+  }
+
+  @Get('charts/policy-status')
+  getPolicyStatus(@Query('supervisorId') supervisorId: number) {
+    return this.dashboardService.getPolicyStatusDistribution(supervisorId);
+  }
+
+  @Get('charts/monthly-collection-trend')
+  getMonthlyTrend(@Query('supervisorId') supervisorId: number) {
+    return this.dashboardService.getMonthlyCollectionTrend(supervisorId);
+  }
+
   /** 🔹 Monthly Sales Trend (Policies Sold per Month) */
   @Get('sales-trend')
   async getSalesTrend() {
