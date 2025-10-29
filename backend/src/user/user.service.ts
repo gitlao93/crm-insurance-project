@@ -4,19 +4,27 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entities';
+import { User, UserRole } from './user.entities';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/response-user.dto';
 import { plainToInstance } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
+import { Quota } from 'src/quota/entities/quota.entity';
+import { AgentQuota } from 'src/quota/entities/agent-quota.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(Quota)
+    private readonly quotaRepo: Repository<Quota>,
+
+    @InjectRepository(AgentQuota)
+    private readonly agentQuotaRepo: Repository<AgentQuota>,
   ) {}
 
   async create(dto: CreateUserDto): Promise<User> {
@@ -37,6 +45,39 @@ export class UserService {
       password: hashedPassword,
     });
     await this.userRepo.save(user);
+
+    if (user.role === UserRole.AGENT) {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-12
+      const currentYear = now.getFullYear();
+
+      // Find quotas for current month and beyond
+      const activeQuotas = await this.quotaRepo
+        .createQueryBuilder('q')
+        .where('(q.year > :year) OR (q.year = :year AND q.month >= :month)', {
+          year: currentYear,
+          month: currentMonth,
+        })
+        .getMany();
+
+      if (activeQuotas.length > 0) {
+        const agentQuotas = activeQuotas.map((quota) =>
+          this.agentQuotaRepo.create({
+            quota,
+            agent: user,
+            achievedPolicies: 0,
+            achievementRate: 0,
+          }),
+        );
+
+        await this.agentQuotaRepo.save(agentQuotas);
+        console.log(
+          `✅ Assigned ${agentQuotas.length} active quotas to agent ${user.email}`,
+        );
+      } else {
+        console.log('ℹ️ No active quotas found for this agent.');
+      }
+    }
 
     // Return with agency + supervisor for proper response DTO
     console.log('New user created with ID:', user);

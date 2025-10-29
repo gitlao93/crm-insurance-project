@@ -166,6 +166,11 @@ export default function PolicyHolder() {
       sortable: true,
     },
     {
+      name: "Policy Number",
+      selector: (row) => `${row.policyNumber ?? "N/A"}`,
+      sortable: true,
+    },
+    {
       name: "Start Date",
       selector: (row) => `${row.StartDate?.split("T")[0] ?? ""}`,
       sortable: true,

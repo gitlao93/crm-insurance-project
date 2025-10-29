@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Button, Form, Modal, Row, Col } from "react-bootstrap";
 import {
+  ClaimType,
   policyPlanService,
   PolicyStatus,
   PolicyTerm,
@@ -26,10 +27,16 @@ export default function PolicyPlanEditModal({
 }: PolicyPlanEditModalProps) {
   const [formData, setFormData] = useState<PolicyPlan | null>(null);
 
+  // ✅ Load policyPlan data when opened
   useEffect(() => {
-    setFormData(policyPlan ? { ...policyPlan } : null);
+    if (policyPlan) {
+      setFormData({ ...policyPlan });
+    } else {
+      setFormData(null);
+    }
   }, [policyPlan]);
 
+  // ✅ Handle input changes
   const handleChange =
     (field: keyof PolicyPlan) =>
     (
@@ -42,13 +49,52 @@ export default function PolicyPlanEditModal({
       setFormData((prev) => (prev ? { ...prev, [field]: value } : prev));
     };
 
+  // ✅ Handle benefit value changes
+  const handleBenefitChange = (type: ClaimType, amount: number) => {
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            benefits: {
+              ...prev.benefits,
+              [type]: amount,
+            },
+          }
+        : prev
+    );
+  };
+
+  // ✅ Add new benefit
+  const handleAddBenefit = () => {
+    setFormData((prev) =>
+      prev
+        ? {
+            ...prev,
+            benefits: {
+              ...prev.benefits,
+              ["" as ClaimType]: 0,
+            },
+          }
+        : prev
+    );
+  };
+
+  // ✅ Remove a benefit
+  const handleRemoveBenefit = (type: ClaimType | string) => {
+    if (!formData) return;
+    const updated = { ...formData.benefits };
+    delete updated[type as ClaimType];
+    setFormData((prev) => (prev ? { ...prev, benefits: updated } : prev));
+  };
+
+  // ✅ Detect changed fields only
   function getChangedFields<T extends object>(
     original: T,
     updated: T
   ): Partial<T> {
     const changed: Partial<T> = {};
     (Object.keys(updated) as (keyof T)[]).forEach((key) => {
-      if (updated[key] !== original[key]) {
+      if (JSON.stringify(updated[key]) !== JSON.stringify(original[key])) {
         changed[key] = updated[key];
       }
     });
@@ -73,7 +119,7 @@ export default function PolicyPlanEditModal({
   };
 
   return (
-    <Modal show={show} onHide={onClose} centered>
+    <Modal show={show} onHide={onClose} centered size="lg">
       <Modal.Header closeButton>
         <Modal.Title>Edit Policy Plan</Modal.Title>
       </Modal.Header>
@@ -81,7 +127,7 @@ export default function PolicyPlanEditModal({
       <Modal.Body>
         {formData && (
           <Form>
-            {/* Category */}
+            {/* CATEGORY */}
             <Form.Group className="mb-3">
               <Form.Label>Category</Form.Label>
               <Form.Select
@@ -98,7 +144,7 @@ export default function PolicyPlanEditModal({
               </Form.Select>
             </Form.Group>
 
-            {/* Policy Name */}
+            {/* PLAN NAME */}
             <Form.Group className="mb-3">
               <Form.Label>Plan Name</Form.Label>
               <Form.Control
@@ -109,7 +155,7 @@ export default function PolicyPlanEditModal({
               />
             </Form.Group>
 
-            {/* Policy Type */}
+            {/* POLICY TYPE */}
             <Form.Group className="mb-3">
               <Form.Label>Policy Type</Form.Label>
               <Form.Select
@@ -122,7 +168,7 @@ export default function PolicyPlanEditModal({
               </Form.Select>
             </Form.Group>
 
-            {/* Policy Term */}
+            {/* TERM */}
             <Form.Group className="mb-3">
               <Form.Label>Term</Form.Label>
               <Form.Select
@@ -140,7 +186,7 @@ export default function PolicyPlanEditModal({
               </Form.Select>
             </Form.Group>
 
-            {/* Premium */}
+            {/* PREMIUM */}
             <Form.Group className="mb-3">
               <Form.Label>Premium</Form.Label>
               <Form.Control
@@ -151,7 +197,7 @@ export default function PolicyPlanEditModal({
               />
             </Form.Group>
 
-            {/* Duration */}
+            {/* DURATION */}
             <Form.Group className="mb-3">
               <Form.Label>Duration (Years)</Form.Label>
               <Form.Control
@@ -162,7 +208,7 @@ export default function PolicyPlanEditModal({
               />
             </Form.Group>
 
-            {/* Commission Rate */}
+            {/* COMMISSION RATE */}
             <Form.Group className="mb-3">
               <Form.Label>Commission Rate (%)</Form.Label>
               <Form.Control
@@ -173,7 +219,7 @@ export default function PolicyPlanEditModal({
               />
             </Form.Group>
 
-            {/* Status */}
+            {/* STATUS */}
             <Form.Group className="mb-3">
               <Form.Label>Status</Form.Label>
               <Form.Select
@@ -188,6 +234,82 @@ export default function PolicyPlanEditModal({
                   {PolicyStatus.RETIRED}
                 </option>
               </Form.Select>
+            </Form.Group>
+
+            {/* ✅ DESCRIPTION */}
+            <Form.Group className="mb-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="description"
+                value={formData.description || ""}
+                onChange={handleChange("description")}
+                placeholder="Describe this policy plan..."
+              />
+            </Form.Group>
+
+            {/* ✅ BENEFITS */}
+            <Form.Group className="mb-3">
+              <Form.Label>Benefits</Form.Label>
+              {Object.entries(formData.benefits || {}).map(
+                ([type, amount], idx) => (
+                  <Row key={idx} className="mb-2 align-items-center">
+                    <Col>
+                      <Form.Select
+                        value={type}
+                        onChange={(e) => {
+                          const newType = e.target.value as ClaimType;
+                          const newBenefits = { ...formData.benefits };
+                          const key = type as ClaimType;
+                          const value = newBenefits[key];
+                          delete newBenefits[key];
+                          newBenefits[newType] = value;
+                          setFormData((prev) =>
+                            prev ? { ...prev, benefits: newBenefits } : prev
+                          );
+                        }}
+                      >
+                        <option value="">Select Claim Type</option>
+                        {Object.values(ClaimType).map((ct) => (
+                          <option key={ct} value={ct}>
+                            {ct}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Col>
+                    <Col>
+                      <Form.Control
+                        type="number"
+                        placeholder="Amount"
+                        value={amount || ""}
+                        onChange={(e) =>
+                          handleBenefitChange(
+                            type as ClaimType,
+                            Number(e.target.value)
+                          )
+                        }
+                      />
+                    </Col>
+                    <Col xs="auto">
+                      <Button
+                        variant="outline-danger"
+                        onClick={() => handleRemoveBenefit(type)}
+                      >
+                        ✕
+                      </Button>
+                    </Col>
+                  </Row>
+                )
+              )}
+              <Button
+                className="m-2"
+                variant="outline-primary"
+                size="sm"
+                onClick={handleAddBenefit}
+              >
+                + Add Benefit
+              </Button>
             </Form.Group>
           </Form>
         )}

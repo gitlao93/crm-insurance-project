@@ -4,6 +4,8 @@ import { LeadInteraction } from './lead-interaction.entities';
 import { Repository } from 'typeorm';
 import { CreateLeadInteractionDto } from './dto/create-lead-interaction.dto';
 import { UpdateLeadInteractionDto } from './dto/update-lead-interaction.dto';
+import { Between } from 'typeorm';
+import { startOfDay, endOfDay } from 'date-fns';
 
 @Injectable()
 export class LeadInteractionService {
@@ -44,5 +46,22 @@ export class LeadInteractionService {
 
   async remove(id: number): Promise<void> {
     await this.leadInteractionRepository.delete(id);
+  }
+
+  async findTodayInteractions(agentId: number): Promise<LeadInteraction[]> {
+    const today = new Date();
+
+    // Use date-fns to get today’s range (midnight → 11:59pm)
+    const start = startOfDay(today);
+    const end = endOfDay(today);
+
+    return this.leadInteractionRepository.find({
+      where: {
+        agentId,
+        dueDate: Between(start, end), // 👈 import Between from 'typeorm'
+      },
+      relations: ['lead', 'agent'],
+      order: { dueDate: 'ASC' },
+    });
   }
 }

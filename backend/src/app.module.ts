@@ -33,6 +33,11 @@ import { Billing } from './billing/billing.entities';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CommissionModule } from './comission/commission.module';
 import { Commission } from './comission/commisson.entities';
+import { ClaimModule } from './claim/claim.module';
+import { Claim } from './claim/claim.entities';
+import { QuotaModule } from './quota/quota.module';
+import { Quota } from './quota/entities/quota.entity';
+import { AgentQuota } from './quota/entities/agent-quota.entity';
 
 @Module({
   imports: [
@@ -43,7 +48,7 @@ import { Commission } from './comission/commisson.entities';
       port: 3306,
       username: 'root',
       password: '',
-      database: 'crm_db',
+      database: 'crm',
       entities: [
         User,
         Agency,
@@ -61,6 +66,9 @@ import { Commission } from './comission/commisson.entities';
         SOA,
         Billing,
         Commission,
+        Claim,
+        Quota,
+        AgentQuota,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -81,6 +89,8 @@ import { Commission } from './comission/commisson.entities';
     SoaModule,
     BillingModule,
     CommissionModule,
+    ClaimModule,
+    QuotaModule,
   ],
   controllers: [],
   providers: [],

@@ -1,6 +1,12 @@
 import api from "./api";
 
 // ========== Types ==========
+export enum ClaimType {
+  DEATH = "Death",
+  BURIAL = "BURIAL",
+  ACCIDENT = "Accident",
+  HOSPITALIZATION = "Hospitalization",
+}
 export enum PolicyStatus {
   ACTIVE = "Active",
   RETIRED = "Retired",
@@ -35,6 +41,8 @@ export interface PolicyPlan {
   status: "active" | "inactive" | string;
   categoryId: number;
   category?: PolicyCategory;
+  description?: string; // ✅ newly added
+  benefits?: Partial<Record<ClaimType, number>>; // ✅ newly added
   createdAt?: string;
   updatedAt?: string;
 }
@@ -56,6 +64,8 @@ export interface CreatePolicyPlanRequest {
   premium: number;
   status: "Active" | "Retired";
   categoryId: number;
+  description?: string; // ✅ optional field
+  benefits?: Partial<Record<ClaimType, number>>; // ✅ optional field
 }
 
 export type UpdatePolicyPlanRequest = Partial<CreatePolicyPlanRequest>;

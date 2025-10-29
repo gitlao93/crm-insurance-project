@@ -54,6 +54,11 @@ export class LeadInteractionController {
     return this.leadInteractionService.update(id, dto);
   }
 
+  @Get('today/:agentId')
+  async getTodayInteractions(@Param('agentId', ParseIntPipe) agentId: number) {
+    return this.leadInteractionService.findTodayInteractions(agentId);
+  }
+
   // ✅ Delete an interaction
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {

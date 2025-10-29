@@ -2,12 +2,13 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PolicyTerm, PolicyType } from '../policy-plan.entities';
+import { ClaimType, PolicyTerm, PolicyType } from '../policy-plan.entities';
 
 export class CreatePolicyPlanDto {
   @IsString()
@@ -45,4 +46,12 @@ export class CreatePolicyPlanDto {
   @IsInt()
   @IsNotEmpty()
   categoryId: number;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsObject({ message: 'benefits must be a valid JSON object' })
+  benefits: Record<ClaimType, number>;
 }

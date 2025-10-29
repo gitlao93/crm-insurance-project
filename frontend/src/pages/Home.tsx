@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Container,
   Navbar,
@@ -8,15 +9,132 @@ import {
   Form,
   Card,
   Image,
+  Alert,
+  Spinner,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import {
+  policyHolderService,
+  type PolicyHolder,
+} from "../services/policyHolderService";
+import {
+  claimService,
+  type CreateClaimRequest,
+} from "../services/claimService";
+type ClaimType = "Death" | "Burial" | "Accident" | "Hospitalization";
 
 export default function GoodlifeDamayanPage() {
   const navigate = useNavigate();
+  const [policyNumber, setPolicyNumber] = useState("");
+  const [policyHolder, setPolicyHolder] = useState<PolicyHolder | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [description, setDescription] = useState("");
+  const [acknowledged, setAcknowledged] = useState(false);
+  // ✅ Make it non-nullable
+  const [selectedBenefits, setSelectedBenefits] = useState<
+    Partial<Record<ClaimType, number>>
+  >({});
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    if (!policyNumber) {
+      setPolicyHolder(null);
+
+      setError(null);
+      return;
+    }
+    console.log(policyNumber);
+    const timeout = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const data = await policyHolderService.findPolicyHolder(policyNumber);
+        console.log("policy holder: ", data);
+        setPolicyHolder(data);
+        setError(null);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+      } catch (err: any) {
+        setPolicyHolder(null);
+        setError("Policy number not found.");
+      } finally {
+        setLoading(false);
+      }
+    }, 700);
+
+    return () => clearTimeout(timeout);
+  }, [policyNumber]);
+
+  // ✅ Check if entered details match fetched policyholder
+  const infoMatch =
+    policyHolder &&
+    firstName.toLowerCase() === policyHolder.firstName.toLowerCase() &&
+    lastName.toLowerCase() === policyHolder.lastName.toLowerCase() &&
+    phoneNumber.toLowerCase() ===
+      (policyHolder.phoneNumber ?? "").toLowerCase() &&
+    email.toLowerCase() === (policyHolder.email ?? "").toLowerCase();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
+
+    if (!policyHolder) {
+      setError("Please enter a valid policy number.");
+      return;
+    }
+
+    if (!infoMatch) {
+      setError("Provided information does not match our records.");
+      return;
+    }
+
+    if (Object.keys(selectedBenefits).length === 0) {
+      setError("Please select at least one benefit to claim.");
+      return;
+    }
+
+    const payload: CreateClaimRequest = {
+      policyHolderId: policyHolder.id,
+      claimType: selectedBenefits,
+      description: description,
+      dateFiled: new Date(),
+    };
+
+    try {
+      setLoading(true);
+      await claimService.createClaim(payload);
+      setSelectedBenefits({});
+      setDescription("");
+      setPolicyHolder(null);
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPhoneNumber("");
+      setDescription("");
+      setPolicyNumber("");
+      setAcknowledged(false);
+      setError(null);
+      setSuccessMessage(
+        "Your claim has been filed. Please visit our office with the required documents for validation. Your agent will contact you for assistance.!"
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError("Failed to submit claim. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,19 +144,6 @@ export default function GoodlifeDamayanPage() {
       <Navbar bg="light" expand="lg" fixed="top" className="shadow-sm">
         <Container>
           <Navbar.Brand href="#home" className="fw-bold fs-4">
-            {/* <div
-              style={{
-                width: "150px",
-                height: "40px",
-                backgroundColor: "#e9ecef",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "4px",
-              }}
-            >
-              Goodlife Damayan
-            </div> */}
             <div
               style={{
                 display: "flex",
@@ -75,6 +180,9 @@ export default function GoodlifeDamayanPage() {
               <Nav.Link onClick={() => scrollToSection("contact")}>
                 Contact
               </Nav.Link>
+              <Nav.Link onClick={() => scrollToSection("claim")}>
+                File Claim
+              </Nav.Link>
             </Nav>
             <Button onClick={() => navigate("/login")}>Login</Button>
           </Navbar.Collapse>
@@ -88,6 +196,9 @@ export default function GoodlifeDamayanPage() {
           paddingTop: "100px",
           paddingBottom: "80px",
           backgroundColor: "#f8f9fa",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <Container>
@@ -128,7 +239,16 @@ export default function GoodlifeDamayanPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+      <section
+        id="about"
+        style={{
+          paddingTop: "80px",
+          paddingBottom: "80px",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
         <Container>
           <Row>
             <Col lg={10} className="mx-auto">
@@ -176,6 +296,9 @@ export default function GoodlifeDamayanPage() {
           paddingTop: "80px",
           paddingBottom: "80px",
           backgroundColor: "#f8f9fa",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <Container>
@@ -240,7 +363,13 @@ export default function GoodlifeDamayanPage() {
       {/* Coverage Section */}
       <section
         id="coverage"
-        style={{ paddingTop: "80px", paddingBottom: "80px" }}
+        style={{
+          paddingTop: "80px",
+          paddingBottom: "80px",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+        }}
       >
         <Container>
           <Row>
@@ -290,6 +419,9 @@ export default function GoodlifeDamayanPage() {
           paddingTop: "80px",
           paddingBottom: "80px",
           backgroundColor: "#f8f9fa",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
         }}
       >
         <Container>
@@ -310,17 +442,14 @@ export default function GoodlifeDamayanPage() {
                         0945 802 3830
                       </Card.Text>
                       <Card.Title className="fw-bold">Office Hours</Card.Title>
-                      <Card.Text className="text-muted">
-                        <ul style={{ listStyleType: "none" }}>
-                          <li className="text-muted">
-                            Monday to Friday: 8:00 AM – 5:00 PM
-                          </li>
-                          <li className="text-muted">
-                            Saturday: Opens 8:00 AM
-                          </li>
-                          <li className="text-muted">Sunday: Closed</li>
-                        </ul>
-                      </Card.Text>
+
+                      <ul style={{ listStyleType: "none" }}>
+                        <li className="text-muted">
+                          Monday to Friday: 8:00 AM – 5:00 PM
+                        </li>
+                        <li className="text-muted">Saturday: Opens 8:00 AM</li>
+                        <li className="text-muted">Sunday: Closed</li>
+                      </ul>
                     </Card.Body>
                   </Card>
                 </Col>
@@ -331,7 +460,16 @@ export default function GoodlifeDamayanPage() {
       </section>
 
       {/* Claim Form Section */}
-      <section id="claim" style={{ paddingTop: "80px", paddingBottom: "80px" }}>
+      <section
+        id="claim"
+        style={{
+          paddingTop: "80px",
+          paddingBottom: "80px",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
         <Container>
           <Row>
             <Col lg={8} className="mx-auto">
@@ -340,97 +478,242 @@ export default function GoodlifeDamayanPage() {
               </h2>
               <Card className="border-0 shadow">
                 <Card.Body className="p-4 p-md-5">
-                  <Form>
+                  <Form onSubmit={handleSubmit}>
                     <Row className="g-3">
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            First Name
+                            Policy Holders First Name
                           </Form.Label>
                           <Form.Control
                             type="text"
                             placeholder="Enter your first name"
                             size="lg"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Last Name
+                            Policy Holders Last Name
                           </Form.Label>
                           <Form.Control
                             type="text"
                             placeholder="Enter your last name"
                             size="lg"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Email Address
+                            Policy Holders Email Address
                           </Form.Label>
                           <Form.Control
                             type="email"
                             placeholder="your.email@example.com"
                             size="lg"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
+
                       <Col md={6}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Phone Number
+                            Policy Holders Phone Number
                           </Form.Label>
                           <Form.Control
                             type="tel"
                             placeholder="+63 XXX XXX XXXX"
                             size="lg"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
+                      {policyHolder && !error && (
+                        <Col xs={12}>
+                          {infoMatch ? (
+                            <Alert variant="success">
+                              ✅ Your information matches our records.
+                            </Alert>
+                          ) : (
+                            <Alert variant="warning">
+                              ⚠️ Policy found, but your provided information
+                              doesn’t match our records.
+                            </Alert>
+                          )}
+                        </Col>
+                      )}
                       <Col xs={12}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Policy Number (if applicable)
+                            Policy Number
                           </Form.Label>
                           <Form.Control
                             type="text"
                             placeholder="Enter your policy number"
                             size="lg"
+                            value={policyNumber}
+                            onChange={(e) => setPolicyNumber(e.target.value)}
                           />
+                          {loading && (
+                            <Spinner
+                              animation="border"
+                              size="sm"
+                              className="mt-2"
+                            />
+                          )}
+                          {error && (
+                            <Alert variant="danger" className="mt-2">
+                              {error}
+                            </Alert>
+                          )}
+                          {policyHolder && !error && (
+                            <Alert variant="success" className="mt-2">
+                              ✅ Policy found
+                            </Alert>
+                          )}
                         </Form.Group>
                       </Col>
+
+                      {policyHolder?.policyPlan?.benefits && (
+                        <Col xs={12}>
+                          <Form.Group>
+                            <Form.Label className="fw-semibold">
+                              Eligible Benefits
+                            </Form.Label>
+                            <div className="d-flex flex-wrap gap-3">
+                              {Object.entries(
+                                policyHolder.policyPlan.benefits
+                              ).map(([benefit, amount]) => {
+                                const typedBenefit = benefit as ClaimType;
+                                const isChecked =
+                                  selectedBenefits[typedBenefit] !== undefined;
+                                return (
+                                  <Form.Check
+                                    key={benefit}
+                                    type="checkbox"
+                                    id={`benefit-${benefit}`}
+                                    label={`${benefit} — ₱${Number(
+                                      amount
+                                    ).toLocaleString()}`}
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedBenefits((prev) => ({
+                                          ...prev,
+                                          [typedBenefit]: Number(amount),
+                                        }));
+                                      } else {
+                                        setSelectedBenefits((prev) => {
+                                          const updated = { ...prev };
+                                          delete updated[typedBenefit];
+                                          return updated;
+                                        });
+                                      }
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      )}
+
+                      {/* --- ✅ Description Field --- */}
                       <Col xs={12}>
                         <Form.Group>
                           <Form.Label className="fw-semibold">
-                            Inquiry Type
-                          </Form.Label>
-                          <Form.Select size="lg">
-                            <option>Select an option</option>
-                            <option>File a Claim</option>
-                            <option>Request Information</option>
-                            <option>Policy Question</option>
-                            <option>General Inquiry</option>
-                          </Form.Select>
-                        </Form.Group>
-                      </Col>
-                      <Col xs={12}>
-                        <Form.Group>
-                          <Form.Label className="fw-semibold">
-                            Message
+                            Description
                           </Form.Label>
                           <Form.Control
                             as="textarea"
-                            rows={5}
-                            placeholder="Please provide details about your inquiry or claim..."
+                            rows={4}
+                            placeholder="Provide more details about your claim..."
+                            size="lg"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                           />
                         </Form.Group>
                       </Col>
+
+                      {/* --- ✅ Requirements Reminder Section --- */}
                       <Col xs={12}>
-                        <Button variant="dark" size="lg" className="w-100">
-                          Submit Request
+                        <Card className="border-0 bg-light mt-3">
+                          <Card.Body>
+                            <h5 className="fw-bold mb-3">
+                              📋 Initial Requirements Checklist
+                            </h5>
+                            <p className="text-muted mb-2">
+                              Please ensure you have these ready for submission
+                              onsite.
+                            </p>
+                            <div className="d-flex flex-column gap-2">
+                              <Form.Check
+                                type="checkbox"
+                                label="Death Certificate (if applicable)"
+                                disabled
+                                checked
+                              />
+                              <Form.Check
+                                type="checkbox"
+                                label="Medical Certificate (if applicable)"
+                                disabled
+                                checked
+                              />
+                              <Form.Check
+                                type="checkbox"
+                                label="Valid ID of Beneficiary"
+                                disabled
+                                checked
+                              />
+                              <Form.Check
+                                type="checkbox"
+                                label="Other supporting documents as required"
+                                disabled
+                                checked
+                              />
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+
+                      {/* --- ✅ Acknowledgement Checkbox --- */}
+                      <Col xs={12}>
+                        <Form.Group className="mt-3">
+                          <Form.Check
+                            type="checkbox"
+                            id="acknowledgement"
+                            label="I understand that I need to submit the required supporting documents onsite for this claim to be processed."
+                            checked={acknowledged}
+                            onChange={(e) => setAcknowledged(e.target.checked)}
+                            required
+                          />
+                        </Form.Group>
+                      </Col>
+
+                      {successMessage && (
+                        <Alert variant="success" className="mt-3">
+                          {successMessage}
+                        </Alert>
+                      )}
+
+                      <Col xs={12}>
+                        <Button
+                          type="submit"
+                          variant="dark"
+                          size="lg"
+                          className="w-100"
+                          disabled={loading}
+                        >
+                          {loading ? "Submitting..." : "Submit Claim"}
                         </Button>
                       </Col>
                     </Row>

@@ -6,10 +6,11 @@ import { SOA } from 'src/soa/soa.entities';
 import { Billing } from './billing.entities';
 import { Commission } from 'src/comission/commisson.entities';
 import { CommissionModule } from 'src/comission/commission.module';
+import { User } from 'src/user/user.entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Billing, SOA, Commission]),
+    TypeOrmModule.forFeature([Billing, SOA, Commission, User]),
     forwardRef(() => CommissionModule),
   ],
   controllers: [BillingController],

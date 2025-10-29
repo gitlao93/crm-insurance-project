@@ -5,9 +5,23 @@ import { DashboardController } from './dashboard.controller';
 import { PolicyHolder } from '../policy-holder/policy-holder.entities';
 import { User } from '../user/user.entities';
 import { PolicyPlan } from 'src/policy-plan/policy-plan.entities';
+import { Claim } from 'src/claim/claim.entities';
+import { Lead } from 'src/lead/lead.entities';
+import { Quota } from 'src/quota/entities/quota.entity';
+import { AgentQuota } from 'src/quota/entities/agent-quota.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PolicyHolder, PolicyPlan, User])],
+  imports: [
+    TypeOrmModule.forFeature([
+      PolicyHolder,
+      PolicyPlan,
+      User,
+      Claim,
+      Lead,
+      Quota,
+      AgentQuota,
+    ]),
+  ],
   controllers: [DashboardController],
   providers: [DashboardService],
 })

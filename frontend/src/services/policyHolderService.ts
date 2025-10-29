@@ -86,6 +86,7 @@ export interface PolicyHolder {
   leadId?: number | null;
   soa: SOA;
   receiptNumber?: string | null;
+  policyNumber: string;
 }
 
 // Create DTO
@@ -123,6 +124,13 @@ export const policyHolderService = {
       params: userId ? { userId } : {},
     });
     return res.data;
+  },
+
+  async findPolicyHolder(policyNumber: string): Promise<PolicyHolder> {
+    const { data } = await api.get<PolicyHolder>(
+      `/policy-holder/policy/${policyNumber}`
+    );
+    return data;
   },
 
   // ✅ Get Single Policy Holder by ID

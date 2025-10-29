@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { CreateBillingDto } from './dto/create-billing.dto';
@@ -18,6 +19,15 @@ export class BillingController {
   @Post()
   create(@Body() dto: CreateBillingDto) {
     return this.service.create(dto);
+  }
+
+  @Get('near-due')
+  getNearDueBillings(
+    @Query('userId') userId?: number,
+    @Query('daysAhead') daysAhead = 5,
+  ) {
+    console.log('daysAhead', daysAhead);
+    return this.service.getNearDueBillings(userId, Number(daysAhead));
   }
 
   @Get()

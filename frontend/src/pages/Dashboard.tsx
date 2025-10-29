@@ -1,83 +1,158 @@
+// src/pages/Dashboard.tsx
 import { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Table, Spinner } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
 import PageHeading from "../widgets/PageHeading";
-
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
 import { dashboardService } from "../services/dashboard";
-
-// ==========================
-// 📘 Types
-// ==========================
+import { UserRole } from "../services/userService";
+import DashboardAdmin from "../components/dashboards/DashboardAdmin.tsx";
+import DashboardCollectionSupervisor from "../components/dashboards/DashboardCollectionSupervisor.tsx";
+import DashboardAgent from "../components/dashboards/DashboardAgent.tsx";
+export interface DashboardSummary2 {
+  lapsable: number;
+  lapsed: number;
+  tcpPercent: number;
+  dapPercent: number;
+}
 export interface DashboardSummary {
   totalHolders: number;
   totalAgents: number;
   totalPlans: number;
+  totalLeads: number;
+  totalClaims: number;
 }
-
-export interface PoliciesByMonth {
+export interface SalesTrend {
   month: string;
+  total: number;
+}
+export interface TopAgent {
+  name: string;
+  totalPolicies: number;
+}
+export interface LeadConversion {
+  status: string;
   count: number;
 }
 
-export interface PolicyHoldersByAgent {
-  firstName: string;
-  lastName: string;
-  total: number;
+export interface SalesPerformance {
+  agentId: number;
+  agentName: string;
+  policiesSold: number;
+  leadsConverted: number;
+  quotaPercentage: number;
+  rank: number;
 }
 
-// ==========================
-// 🚀 Component
-// ==========================
+export interface dashboardData {
+  summary: DashboardSummary;
+  supSummary?: DashboardSummary2;
+  salesTrend: SalesTrend[];
+  topAgents: TopAgent[];
+  leadConversion: LeadConversion[];
+  performance: SalesPerformance[];
+  collectionSummary?: DashboardSummary2;
+  installmentRecovery?: {
+    irPercentage: number;
+  };
+}
+
 export default function Dashboard() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  // const [monthlyPolicies, setMonthlyPolicies] = useState<PoliciesByMonth[]>([]);
-  const [agents, setAgents] = useState<PolicyHoldersByAgent[]>([]);
+  const storedUser = localStorage.getItem("user") ?? "";
+  const user = JSON.parse(storedUser);
+  const role = user.role;
+
   const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<dashboardData>({
+    summary: {
+      totalHolders: 0,
+      totalAgents: 0,
+      totalPlans: 0,
+      totalLeads: 0,
+      totalClaims: 0,
+    },
+    supSummary: {
+      lapsable: 0,
+      lapsed: 0,
+      tcpPercent: 0,
+      dapPercent: 0,
+    },
+    salesTrend: [],
+    topAgents: [],
+    leadConversion: [],
+    performance: [],
+  });
 
-  // ✅ Register Chart.js modules
-  ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-  );
-
-  // ✅ Fetch Dashboard Data
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
-        const [summaryData, agentData] = await Promise.all([
-          dashboardService.getSummary(),
-          // dashboardService.getPoliciesByMonth(),
-          dashboardService.getPolicyHoldersByAgent(),
-        ]);
+        let summaryPromise: Promise<DashboardSummary>;
 
-        setSummary(summaryData);
-        // setMonthlyPolicies(monthlyData);
-        setAgents(agentData);
+        if (role === UserRole.AGENT) {
+          summaryPromise = dashboardService.getPolicyHoldersByAgent();
+        } else {
+          summaryPromise = dashboardService.getSummary();
+        }
+        const [summary, salesTrend, topAgents, leadRes, performance] =
+          await Promise.all([
+            summaryPromise,
+
+            dashboardService.getSalesTrend(),
+            dashboardService.getTopAgents(),
+            dashboardService.getLeadConversion(),
+            dashboardService.getSalesPerformance(),
+          ]);
+        // Optional supervisor data
+        let collectionSummary = null;
+        let installmentRecovery = null;
+
+        if (role === UserRole.COLLECTION_SUPERVISOR) {
+          collectionSummary = await dashboardService.getCollectionSummary(
+            user.id,
+            "2025-10-01",
+            "2025-10-30"
+          );
+          installmentRecovery = await dashboardService.getInstallmentRecovery(
+            user.id,
+            "2025-10-01",
+            "2025-10-30"
+          );
+        }
+
+        type RawLeadItem = {
+          name?: string;
+          value?: number;
+          status?: string;
+          count?: number;
+        };
+        const leadConversion = Array.isArray(leadRes?.data)
+          ? (leadRes.data as RawLeadItem[]).map((item) => ({
+              status: item.name || item.status || "Unknown",
+              count: item.value ?? item.count ?? 0,
+            }))
+          : Array.isArray(leadRes)
+          ? (leadRes as RawLeadItem[]).map((item) => ({
+              status: item.status || item.name || "Unknown",
+              count: item.count ?? item.value ?? 0,
+            }))
+          : [];
+        setDashboardData({
+          summary,
+          salesTrend,
+          topAgents,
+          leadConversion,
+          performance,
+          collectionSummary,
+          installmentRecovery,
+        });
       } catch (err) {
-        console.error("Failed to load dashboard:", err);
+        console.error("Dashboard load error:", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, []);
+
+    loadData();
+  }, [role, user.id]);
 
   if (loading)
     return (
@@ -87,130 +162,16 @@ export default function Dashboard() {
       </Container>
     );
 
-  // ✅ Prepare Chart.js Data
-  // const chartData = {
-  //   labels: monthlyPolicies.map((m) => m.month),
-  //   datasets: [
-  //     {
-  //       label: "Policies Created",
-  //       data: monthlyPolicies.map((m) => m.count),
-  //       borderColor: "#0d6efd",
-  //       backgroundColor: "rgba(13, 110, 253, 0.2)",
-  //       borderWidth: 2,
-  //       pointRadius: 4,
-  //       tension: 0.3,
-  //     },
-  //   ],
-  // };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: "top" as const },
-      title: {
-        display: true,
-        text: "Policy Creation Trend (This Year)",
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { precision: 0 },
-      },
-    },
-  };
-
+  // 🔀 Render based on role
   return (
     <Container fluid className="p-4">
-      <PageHeading heading="Dashboard" />
+      <PageHeading heading="Dashboard Overview" />
 
-      {/* ======================= */}
-      {/* Summary Cards */}
-      {/* ======================= */}
-      <Row className="mt-4">
-        <Col md={4} className="mb-4">
-          <Card className="shadow-sm text-center">
-            <Card.Body>
-              <Card.Title>Total Policy Holders</Card.Title>
-              <h2 className="text-primary fw-bold">
-                {summary?.totalHolders ?? 0}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4} className="mb-4">
-          <Card className="shadow-sm text-center">
-            <Card.Body>
-              <Card.Title>Total Agents</Card.Title>
-              <h2 className="text-success fw-bold">
-                {summary?.totalAgents ?? 0}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4} className="mb-4">
-          <Card className="shadow-sm text-center">
-            <Card.Body>
-              <Card.Title>Total Policy Plans</Card.Title>
-              <h2 className="text-warning fw-bold">
-                {summary?.totalPlans ?? 0}
-              </h2>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* ======================= */}
-      {/* Monthly Policy Trend Graph + Top Agents */}
-      {/* ======================= */}
-      <Row className="mt-3">
-        {/* 📈 Line Chart */}
-        {/* <Col md={8} className="mb-4">
-          <Card className="shadow-sm p-3">
-            {monthlyPolicies.length === 0 ? (
-              <div className="text-muted text-center">No data available</div>
-            ) : (
-              <Line data={chartData} options={chartOptions} />
-            )}
-          </Card>
-        </Col> */}
-
-        {/* 🧑‍💼 Top Agents Table */}
-        <Col md={4}>
-          <Card className="shadow-sm">
-            <Card.Body>
-              <Card.Title>Top Agents by Policy Holders</Card.Title>
-              {agents.length === 0 ? (
-                <div className="text-muted mt-3">No data available</div>
-              ) : (
-                <Table striped hover responsive className="mt-3">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Agent</th>
-                      <th>Policy Holders</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {agents
-                      .sort((a, b) => b.total - a.total)
-                      .slice(0, 5)
-                      .map((a, index) => (
-                        <tr key={a.agentId}>
-                          <td>{index + 1}</td>
-                          <td>
-                            {a.firstName} {a.lastName}
-                          </td>
-                          <td>{a.total}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </Table>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+      {role === UserRole.ADMIN && <DashboardAdmin data={dashboardData} />}
+      {role === UserRole.COLLECTION_SUPERVISOR && (
+        <DashboardCollectionSupervisor data={dashboardData} />
+      )}
+      {role === UserRole.AGENT && <DashboardAgent data={dashboardData} />}
     </Container>
   );
 }

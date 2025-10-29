@@ -158,6 +158,11 @@ export const leadInteractionService = {
     return data;
   },
 
+  async getTodayInteractions(agentId: number) {
+    const response = await api.get(`/lead-interactions/today/${agentId}`);
+    return response.data;
+  },
+
   // ✅ Delete an interaction
   async deleteInteraction(id: number): Promise<void> {
     await api.delete(`/lead-interactions/${id}`);
