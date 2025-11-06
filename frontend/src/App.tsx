@@ -14,6 +14,7 @@ import PolicyHolderSoa from "./pages/PolicyHolderSoa";
 import Commission from "./pages/Commission";
 import Home from "./pages/Home";
 import ClaimRequest from "./pages/ClaimRequest";
+import MessagesPage from "./pages/Messages";
 
 function App() {
   return (
@@ -93,6 +94,15 @@ function App() {
             element={
               <PrivateRoute>
                 <Message />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="messages"
+            element={
+              <PrivateRoute>
+                <MessagesPage />
               </PrivateRoute>
             }
           />

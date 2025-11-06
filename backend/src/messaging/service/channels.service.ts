@@ -41,8 +41,8 @@ export class ChannelsService {
       .where('channel.agencyId = :agencyId', { agencyId })
       .andWhere(
         new Brackets((qb) => {
-          qb.where('channel.isPrivate = false') // public channels in agency
-            .orWhere('members.userId = :userId', { userId }); // OR user is a member
+          qb.where('channel.createdById = :userId', { userId }) // user owns it
+            .orWhere('members.userId = :userId', { userId }); // or user is member
         }),
       )
       .getMany();

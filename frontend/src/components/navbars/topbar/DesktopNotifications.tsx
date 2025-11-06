@@ -1,38 +1,90 @@
-import { ListGroup, Dropdown, Image } from "react-bootstrap";
+import { ListGroup, Dropdown, Image, Badge } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import type { NotificationProps } from "../../../types";
 import { useEffect, useState } from "react";
 import { NotificationList } from "./NotificationList";
+import {
+  notificationService,
+  type Notification,
+} from "../../../services/notificationService";
+import { connectSocket } from "../../../services/socketService";
 
-interface DesktopNotificationProps {
-  data: NotificationProps[];
-}
-
-export const DesktopNotifications: React.FC<DesktopNotificationProps> = ({
-  data,
-}) => {
+export const DesktopNotifications: React.FC = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState<number | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showDropdown, setShowDropdown] = useState(false);
 
+  /** 🧩 Load user info from localStorage */
   useEffect(() => {
-    // Get user info from localStorage
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       try {
         const userObj = JSON.parse(storedUser);
+        setUserId(userObj.id);
         setName(`${userObj.firstName} ${userObj.lastName}`);
-        setEmail(`${userObj.email}`);
+        setEmail(userObj.email);
       } catch (err) {
         console.error("Failed to parse user from localStorage:", err);
       }
     }
   }, []);
 
+  /** 🔔 Fetch notifications when userId changes */
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      try {
+        const data = await notificationService.getNotifications(userId);
+        setNotifications(data);
+        setUnreadCount(data.filter((n) => !n.isRead).length);
+      } catch (err) {
+        console.error("Failed to fetch notifications:", err);
+      }
+    })();
+  }, [userId]);
+
+  /** 🔗 Connect to WebSocket and listen for real-time notifications */
+  useEffect(() => {
+    if (!userId) return;
+    const socket = connectSocket();
+
+    // Join personal user room
+    socket.emit("joinUser", { userId });
+
+    socket.on("newNotification", (notif: Notification) => {
+      console.log("🆕 New notification received:", notif);
+      setNotifications((prev) => [notif, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    return () => {
+      socket.off("newNotification");
+      socket.emit("leaveUserRoom", { userId });
+    };
+  }, [userId]);
+
+  /** 🧹 Mark notification as read (on click) */
+  const handleNotificationClick = async (id: number, link?: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(prev - 1, 0));
+      if (link) navigate(link);
+    } catch (err) {
+      console.error("Failed to mark as read:", err);
+    }
+  };
+
+  /** 🚪 Logout */
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login"); // redirect to login page
+    navigate("/login");
   };
 
   return (
@@ -41,27 +93,45 @@ export const DesktopNotifications: React.FC<DesktopNotificationProps> = ({
       bsPrefix="navbar-nav"
       className="navbar-right-wrap ms-auto d-flex nav-top-wrap"
     >
-      <Dropdown as="li" className="stopevent">
+      {/* 🔔 Notification dropdown */}
+      <Dropdown
+        as="li"
+        className="stopevent"
+        show={showDropdown}
+        onToggle={(isOpen) => setShowDropdown(isOpen)}
+      >
         <Dropdown.Toggle
           as="a"
           bsPrefix=" "
           id="dropdownNotification"
-          className="btn btn-light btn-icon rounded-circle indicator indicator-primary text-muted"
+          className="btn btn-light btn-icon rounded-circle indicator text-muted position-relative"
         >
           <i className="fe fe-bell"></i>
+          {unreadCount > 0 && (
+            <Badge
+              bg="danger"
+              pill
+              className="position-absolute top-0 start-100 translate-middle"
+            >
+              {unreadCount}
+            </Badge>
+          )}
         </Dropdown.Toggle>
+
         <Dropdown.Menu
           className="dashboard-dropdown notifications-dropdown dropdown-menu-lg dropdown-menu-end py-0"
           aria-labelledby="dropdownNotification"
           align="end"
-          show
         >
           <Dropdown.Item className="mt-3" bsPrefix=" " as="div">
             <div className="border-bottom px-3 pt-0 pb-3 d-flex justify-content-between align-items-end">
               <span className="h4 mb-0">Notifications</span>
             </div>
 
-            <NotificationList notificationItems={data} />
+            <NotificationList
+              notificationItems={notifications}
+              onNotificationClick={handleNotificationClick}
+            />
 
             <div className="border-top px-3 pt-3 pb-3">
               <Link
@@ -74,6 +144,8 @@ export const DesktopNotifications: React.FC<DesktopNotificationProps> = ({
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
+
+      {/* 👤 User menu */}
       <Dropdown as="li" className="ms-2">
         <Dropdown.Toggle
           as="a"
@@ -90,33 +162,17 @@ export const DesktopNotifications: React.FC<DesktopNotificationProps> = ({
           </div>
         </Dropdown.Toggle>
         <Dropdown.Menu
-          className="dropdown-menu dropdown-menu-end "
+          className="dropdown-menu dropdown-menu-end"
           align="end"
           aria-labelledby="dropdownUser"
-          show
         >
           <Dropdown.Item as="div" className="px-5 pb-0 pt-2" bsPrefix=" ">
-            <div className="lh-1 ">
+            <div className="lh-1">
               <h6 className="mb-1">{name}</h6>
               <h6>{email}</h6>
-              {/* <Link to="#" className="text-inherit fs-6">
-                View my profile
-              </Link> */}
+              <div className="dropdown-divider mt-3 mb-2"></div>
             </div>
-            <div className=" dropdown-divider mt-3 mb-2"></div>
           </Dropdown.Item>
-          {/* <Dropdown.Item eventKey="2">
-            <i className="fe fe-user me-2"></i> Edit Profile
-          </Dropdown.Item>
-          <Dropdown.Item eventKey="3">
-            <i className="fe fe-activity me-2"></i> Activity Log
-          </Dropdown.Item>
-          <Dropdown.Item className="text-primary">
-            <i className="fe fe-star me-2"></i> Go Pro
-          </Dropdown.Item>
-          <Dropdown.Item>
-            <i className="fe fe-settings me-2"></i> Account Settings
-          </Dropdown.Item> */}
           <Dropdown.Item onClick={handleLogout}>
             <i className="fe fe-power me-2"></i>Sign Out
           </Dropdown.Item>

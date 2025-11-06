@@ -93,7 +93,7 @@ export default function PolicyHolderSoa() {
           <Card.Body>
             <Row>
               <Col md={4}>
-                <strong>Policy Number:</strong> {soa.policyNumber}
+                <strong>Policy Number:</strong> {holder.policyNumber}
               </Col>
               <Col md={4}>
                 <strong>Start Date:</strong>{" "}

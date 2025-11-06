@@ -81,11 +81,18 @@ export const DashboardMenu: DashboardMenuProps[] = [
     link: "/lead",
     roles: ["admin", "agent"], // 👈 admin & agent
   },
+  // {
+  //   id: uuid(),
+  //   title: "Message",
+  //   icon: "slack",
+  //   link: "/message",
+  //   roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
+  // },
   {
     id: uuid(),
-    title: "Message",
+    title: "Messages",
     icon: "slack",
-    link: "/message",
+    link: "/messages",
     roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
   },
   {

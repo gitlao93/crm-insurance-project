@@ -17,6 +17,8 @@ import { DirectMessageService } from './service/direct-message.service';
 import { DirectMessageController } from './controller/direct-message.controller';
 import { DirectMessage } from './entities/direct-message.entity';
 import { User } from 'src/user/user.entities';
+import { NotificationModule } from 'src/notification/notification.module';
+import { NotificationGatewayModule } from 'src/notification-gateway/notification-gateway.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { User } from 'src/user/user.entities';
       DirectMessage,
       User,
     ]),
+    NotificationModule, // ✅
+    NotificationGatewayModule,
   ],
   controllers: [
     ChannelsController,

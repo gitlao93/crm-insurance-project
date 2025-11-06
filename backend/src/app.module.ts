@@ -38,6 +38,9 @@ import { Claim } from './claim/claim.entities';
 import { QuotaModule } from './quota/quota.module';
 import { Quota } from './quota/entities/quota.entity';
 import { AgentQuota } from './quota/entities/agent-quota.entity';
+import { NotificationModule } from './notification/notification.module';
+import { Notification } from './notification/notification.entities';
+import { NotificationGatewayModule } from './notification-gateway/notification-gateway.module';
 
 @Module({
   imports: [
@@ -69,6 +72,7 @@ import { AgentQuota } from './quota/entities/agent-quota.entity';
         Claim,
         Quota,
         AgentQuota,
+        Notification,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -91,6 +95,8 @@ import { AgentQuota } from './quota/entities/agent-quota.entity';
     CommissionModule,
     ClaimModule,
     QuotaModule,
+    NotificationModule,
+    NotificationGatewayModule,
   ],
   controllers: [],
   providers: [],

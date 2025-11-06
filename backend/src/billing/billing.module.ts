@@ -7,11 +7,15 @@ import { Billing } from './billing.entities';
 import { Commission } from 'src/comission/commisson.entities';
 import { CommissionModule } from 'src/comission/commission.module';
 import { User } from 'src/user/user.entities';
+import { NotificationModule } from 'src/notification/notification.module';
+import { NotificationGatewayModule } from 'src/notification-gateway/notification-gateway.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Billing, SOA, Commission, User]),
     forwardRef(() => CommissionModule),
+    NotificationModule, // ✅
+    NotificationGatewayModule,
   ],
   controllers: [BillingController],
   providers: [BillingService],
