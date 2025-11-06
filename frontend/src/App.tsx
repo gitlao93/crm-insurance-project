@@ -14,7 +14,8 @@ import PolicyHolderSoa from "./pages/PolicyHolderSoa";
 import Commission from "./pages/Commission";
 import Home from "./pages/Home";
 import ClaimRequest from "./pages/ClaimRequest";
-import MessagesPage from "./pages/Messages";
+// import MessagesPage from "./pages/Messages";
+import SlackMessagingPage from "./pages/SlackMessagingPage";
 
 function App() {
   return (
@@ -98,11 +99,20 @@ function App() {
             }
           />
 
-          <Route
+          {/* <Route
             path="messages"
             element={
               <PrivateRoute>
                 <MessagesPage />
+              </PrivateRoute>
+            }
+          /> */}
+
+          <Route
+            path="slack-messaging"
+            element={
+              <PrivateRoute>
+                <SlackMessagingPage />
               </PrivateRoute>
             }
           />
