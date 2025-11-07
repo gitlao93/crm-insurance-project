@@ -18,6 +18,8 @@ import ClaimRequest from "./pages/ClaimRequest";
 import SlackMessagingPage from "./pages/SlackMessagingPage";
 import { AppActivityProvider } from "./context/AppActivityProvider";
 import ForbiddenPage from "./pages/ForbiddenPage";
+import Quota from "./pages/Quota";
+import NotificationHistory from "./pages/NotificationHistory";
 
 function App() {
   return (
@@ -79,7 +81,16 @@ function App() {
                 </PrivateRoute>
               }
             />
-
+            <Route
+              path="notification-history"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <NotificationHistory />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="policy-holder-soa"
               element={
@@ -110,15 +121,14 @@ function App() {
               }
             />
 
-            {/* <Route
-            path="messages"
-            element={
-              <PrivateRoute
-                  allowedRoles={["admin", "collection_supervisor", "agent"]}>
-                <MessagesPage />
-              </PrivateRoute>
-            }
-          /> */}
+            <Route
+              path="quota"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <Quota />
+                </PrivateRoute>
+              }
+            />
 
             <Route
               path="slack-messaging"
@@ -147,6 +157,7 @@ function App() {
               }
             />
           </Route>
+
           <Route path="/403" element={<ForbiddenPage />} />
         </Routes>
       </BrowserRouter>

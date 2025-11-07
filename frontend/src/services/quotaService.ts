@@ -9,6 +9,7 @@ export interface CreateQuotaRequest {
 export interface Quota {
   id: number;
   month: string;
+  year: number;
   targetPolicies: number;
   agencyId: number;
   createdBy?: number;

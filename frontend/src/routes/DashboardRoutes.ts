@@ -104,6 +104,13 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
+    title: "Quota Management",
+    icon: "settings",
+    link: "/quota",
+    roles: ["admin"],
+  },
+  {
+    id: uuid(),
     title: "Agency Information",
     icon: "settings",
     link: "/setting",
