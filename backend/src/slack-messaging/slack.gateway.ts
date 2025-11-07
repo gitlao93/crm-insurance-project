@@ -188,7 +188,7 @@ export class SlackGateway implements OnGatewayConnection, OnGatewayDisconnect {
           });
           // emit socket notification if user online
           if (this.userSockets.has(memberId)) {
-            this.server.to(`user:${memberId}`).emit('newNotification', {
+            this.server.to(`user:${memberId}`).emit('slack:notification', {
               notification: notif,
               channelId: data.channelId,
             });
@@ -201,17 +201,6 @@ export class SlackGateway implements OnGatewayConnection, OnGatewayDisconnect {
           // swallow individual notif errors to keep messaging flow
           this.logger.error('Failed to create notification', err);
         }
-
-        // Save + emit via NotificationGateway
-        // const notif = await this.notificationService.create({
-        //   userId: memberId,
-        //   title: `New message in ${message.channel?.name ?? 'channel'}`,
-        //   message: message.content.slice(0, 200),
-        //   link: `/slack-messaging`,
-        // });
-
-        // 👇 This is the important part
-        // this.notificationGateway.sendToUser(memberId, notif);
       }
     }
   }
