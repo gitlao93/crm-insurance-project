@@ -87,6 +87,7 @@ export interface PolicyHolder {
   soa: SOA;
   receiptNumber?: string | null;
   policyNumber: string;
+  dueDate?: string;
 }
 
 // Create DTO
@@ -103,6 +104,7 @@ export interface CreatePolicyHolderRequest {
   status: PolicyHolderStatus;
   leadId?: number | null;
   receiptNumber?: string | null;
+  dueDate?: string;
 }
 
 // Update DTO
