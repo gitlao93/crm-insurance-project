@@ -200,6 +200,7 @@ export default function LeadCreateModal({
               type="text"
               name="phoneNumber"
               value={formData.phoneNumber}
+              maxLength={11}
               onChange={handleChange("phoneNumber")}
               isInvalid={!!errors.phoneNumber}
             />

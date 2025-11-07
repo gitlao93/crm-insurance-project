@@ -17,6 +17,8 @@ import { CommissionService } from 'src/comission/commission.service';
 import { Between, In } from 'typeorm';
 import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { User, UserRole } from 'src/user/user.entities';
+import { NotificationsService } from 'src/notification/notification.service';
+import { NotificationGateway } from 'src/notification-gateway/notification.gateway';
 
 @Injectable()
 export class BillingService {
@@ -34,6 +36,9 @@ export class BillingService {
 
     @Inject(forwardRef(() => CommissionService)) // 👈 handle potential circular dep
     private readonly commissionService: CommissionService,
+
+    private readonly notificationService: NotificationsService, // ✅
+    private readonly notificationGateway: NotificationGateway, // ✅
   ) {}
 
   async create(dto: CreateBillingDto): Promise<Billing> {
@@ -200,5 +205,68 @@ export class BillingService {
     this.logger.log(
       `Billing status update complete: ${updatedCount} records updated.`,
     );
+  }
+
+  // 🕒 CRON — Daily check for bills due soon or overdue
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // @Cron('*/10 * * * * *')
+  async notifyUpcomingAndOverdueBills(): Promise<void> {
+    this.logger.log('🔔 Checking for upcoming and overdue bills...');
+
+    const today = startOfDay(new Date());
+
+    // Get all billings that are not yet paid
+    const billings = await this.billingRepo.find({
+      where: { status: In([BillingStatus.PENDING, BillingStatus.OVERDUE]) },
+      relations: ['soa', 'soa.policyHolder', 'soa.policyHolder.agent'],
+    });
+
+    for (const billing of billings) {
+      const dueDate = startOfDay(new Date(billing.dueDate));
+      const agent = billing.soa?.policyHolder?.agent;
+      const clientName =
+        billing.soa?.policyHolder?.firstName +
+          ' ' +
+          billing.soa?.policyHolder?.lastName || 'a client';
+
+      if (!agent?.id) continue; // Skip if no assigned agent
+
+      const daysUntilDue = Math.ceil(
+        (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      let message: string | null = null;
+
+      if (daysUntilDue === 3) {
+        message = `Reminder: Your client ${clientName}'s bill is due in 3 days.`;
+      } else if (daysUntilDue === 2) {
+        message = `Reminder: Your client ${clientName}'s bill is due in 2 days.`;
+      } else if (daysUntilDue === 1) {
+        message = `Reminder: Your client ${clientName}'s bill is due tomorrow.`;
+      } else if (daysUntilDue === 0) {
+        message = `Reminder: Your client ${clientName}'s bill is due today.`;
+      } else if (daysUntilDue < 0) {
+        const daysOverdue = Math.abs(daysUntilDue);
+        message = `Alert: Your client ${clientName}'s bill is overdue by ${daysOverdue} day${
+          daysOverdue > 1 ? 's' : ''
+        }.`;
+      }
+
+      if (message) {
+        const notification = await this.notificationService.create({
+          userId: agent.id,
+          title: 'Billing Reminder',
+          message,
+          link: `/policy-holder`,
+        });
+
+        this.notificationGateway.sendToUser(agent.id, notification);
+        this.logger.log(
+          `📨 Notified agent ${agent.id} about billing #${billing.id}`,
+        );
+      }
+    }
+
+    this.logger.log('✅ Billing reminders check complete.');
   }
 }

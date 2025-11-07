@@ -81,16 +81,37 @@ export const DashboardMenu: DashboardMenuProps[] = [
     link: "/lead",
     roles: ["admin", "agent"], // 👈 admin & agent
   },
+  // {
+  //   id: uuid(),
+  //   title: "Message",
+  //   icon: "slack",
+  //   link: "/message",
+  //   roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
+  // },
+  // {
+  //   id: uuid(),
+  //   title: "Messages",
+  //   icon: "slack",
+  //   link: "/messages",
+  //   roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
+  // },
   {
     id: uuid(),
-    title: "Message",
+    title: "Slack Messaging",
     icon: "slack",
-    link: "/message",
+    link: "/slack-messaging",
     roles: ["admin", "collection_supervisor", "agent"], // 👈 all roles
   },
   {
     id: uuid(),
-    title: "Setting",
+    title: "Quota Management",
+    icon: "settings",
+    link: "/quota",
+    roles: ["admin"],
+  },
+  {
+    id: uuid(),
+    title: "Agency Information",
     icon: "settings",
     link: "/setting",
     roles: ["admin"],

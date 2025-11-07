@@ -5,6 +5,8 @@ import { CreateClaimDto } from './dto/create-claim.dto';
 import { UpdateClaimDto } from './dto/update-claim.dto';
 import { Claim, ClaimStatus } from './claim.entities';
 import { PolicyHolder } from 'src/policy-holder/policy-holder.entities';
+import { NotificationGateway } from 'src/notification-gateway/notification.gateway';
+import { NotificationsService } from 'src/notification/notification.service';
 
 @Injectable()
 export class ClaimService {
@@ -14,6 +16,9 @@ export class ClaimService {
 
     @InjectRepository(PolicyHolder)
     private readonly policyHolderRepository: Repository<PolicyHolder>,
+
+    private readonly notificationService: NotificationsService,
+    private readonly notificationGateway: NotificationGateway,
   ) {}
 
   // ✅ Create Claim
@@ -24,7 +29,6 @@ export class ClaimService {
     });
     if (!holder) throw new NotFoundException('Policy Holder not found');
 
-    // Optional: Auto-fill amount from policy plan benefits
     const claim = this.claimRepository.create({
       ...dto,
       dateFiled: dto.dateFiled || new Date(),
@@ -32,7 +36,24 @@ export class ClaimService {
     });
 
     claim.policyHolder = holder;
-    return this.claimRepository.save(claim);
+    const savedClaim = await this.claimRepository.save(claim);
+
+    // 🟢 Find agency admin
+    const admin = await this.notificationService.findAgencyAdmin(
+      holder.agencyId,
+    );
+    if (admin) {
+      const notification = await this.notificationService.create({
+        userId: admin.id,
+        title: 'New Claim Filed',
+        message: `A new claim has been filed by ${holder.firstName} ${holder.lastName}.`,
+        link: `/claim-request`,
+      });
+      console.log('Notification sent to agency admin:', notification);
+      this.notificationGateway.sendToUser(admin.id, notification);
+    }
+
+    return savedClaim;
   }
 
   // ✅ Find All Claims (optional filters)

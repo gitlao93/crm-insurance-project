@@ -4,17 +4,25 @@ import type { JSX } from "react";
 
 interface PrivateRouteProps {
   children: JSX.Element;
+  allowedRoles?: string[]; // 👈 added: roles that can access this route
 }
 
-const PrivateRoute = ({ children }: PrivateRouteProps) => {
+const PrivateRoute = ({ children, allowedRoles }: PrivateRouteProps) => {
   const isAuthenticated = AuthService.isAuthenticated();
 
-  // if not logged in → redirect to /login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // if logged in → render the page
+  // ✅ Get user data (assuming it's stored in localStorage)
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+
+  // ✅ Check if user’s role is allowed for this route
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/403" replace />; // or redirect to /403 page if you prefer
+  }
+
   return children;
 };
 

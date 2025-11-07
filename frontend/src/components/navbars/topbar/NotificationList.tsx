@@ -1,32 +1,38 @@
 import SimpleBar from "simplebar-react";
-import { ListGroup } from "react-bootstrap";
-// import "simplebar/dist/simplebar.min.css";
-import type { NotificationProps } from "../../../types";
+import { ListGroup, Row, Col } from "react-bootstrap";
+import type { Notification } from "../../../services/notificationService";
 
 interface NotificationListProps {
-  notificationItems: NotificationProps[];
+  notificationItems: Notification[];
+  onNotificationClick: (id: number, link?: string) => void;
 }
-export const NotificationList: React.FC<NotificationListProps> = () => {
+
+export const NotificationList: React.FC<NotificationListProps> = ({
+  notificationItems,
+  onNotificationClick,
+}) => {
   return (
     <SimpleBar style={{ maxHeight: "300px" }}>
       <ListGroup variant="flush">
-        {/* {notificationItems.map(function (item, index) {
-          return (
+        {notificationItems.length === 0 ? (
+          <ListGroup.Item>No notifications</ListGroup.Item>
+        ) : (
+          notificationItems.map((item, index) => (
             <ListGroup.Item
-              className={index === 0 ? "bg-light" : ""}
               key={index}
+              className={item.isRead ? "" : "bg-light"}
+              action
+              onClick={() => onNotificationClick(item.id, item.link)}
             >
               <Row>
                 <Col>
-                  <Link to="#" className="text-muted">
-                    <h5 className=" mb-1">{item.sender}</h5>
-                    <p className="mb-0"> {item.message}</p>
-                  </Link>
+                  <h6 className="mb-1 fw-bold">{item.title}</h6>
+                  <p className="mb-0 small text-muted">{item.message}</p>
                 </Col>
               </Row>
             </ListGroup.Item>
-          );
-        })} */}
+          ))
+        )}
       </ListGroup>
     </SimpleBar>
   );

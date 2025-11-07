@@ -38,7 +38,13 @@ import { Claim } from './claim/claim.entities';
 import { QuotaModule } from './quota/quota.module';
 import { Quota } from './quota/entities/quota.entity';
 import { AgentQuota } from './quota/entities/agent-quota.entity';
-
+import { NotificationModule } from './notification/notification.module';
+import { Notification } from './notification/notification.entities';
+import { NotificationGatewayModule } from './notification-gateway/notification-gateway.module';
+import { SlackMessagingModule } from './slack-messaging/slack.module';
+import { SlackChannelMember } from './slack-messaging/entities/channel-member.entity';
+import { SlackChannel } from './slack-messaging/entities/channel.entity';
+import { SlackMessage } from './slack-messaging/entities/message.entity';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -69,6 +75,10 @@ import { AgentQuota } from './quota/entities/agent-quota.entity';
         Claim,
         Quota,
         AgentQuota,
+        Notification,
+        SlackChannel,
+        SlackChannelMember,
+        SlackMessage,
       ],
       synchronize: true, //in production change to false
       logging: false,
@@ -91,6 +101,9 @@ import { AgentQuota } from './quota/entities/agent-quota.entity';
     CommissionModule,
     ClaimModule,
     QuotaModule,
+    NotificationModule,
+    NotificationGatewayModule,
+    SlackMessagingModule,
   ],
   controllers: [],
   providers: [],

@@ -31,7 +31,7 @@ export class Claim {
   policyHolderId: number;
 
   // 🎯 CLAIM TYPE
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: 'json', nullable: false })
   claimType: Partial<Record<ClaimType, number>>;
 
   // 🧾 DESCRIPTION / NOTES

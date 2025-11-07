@@ -190,6 +190,7 @@ export default function UserCreateModal({
               type="text"
               name="phoneNumber"
               value={formData.phoneNumber}
+              maxLength={11}
               onChange={handleChange("phoneNumber")}
               isInvalid={!!errors.phoneNumber}
             />
@@ -197,7 +198,7 @@ export default function UserCreateModal({
               {errors.phoneNumber}
             </Form.Control.Feedback>
           </Form.Group>
-          <Form.Group className="mb-3">
+          {/* <Form.Group className="mb-3">
             <Form.Label>Landline</Form.Label>
             <Form.Control
               type="text"
@@ -209,7 +210,7 @@ export default function UserCreateModal({
             <Form.Control.Feedback type="invalid">
               {errors.landlineNumber}
             </Form.Control.Feedback>
-          </Form.Group>
+          </Form.Group> */}
           <Form.Group className="mb-3">
             <Form.Label>Office Hours</Form.Label>
             <Form.Select
