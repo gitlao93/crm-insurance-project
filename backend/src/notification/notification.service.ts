@@ -60,4 +60,38 @@ export class NotificationsService {
       where: { agencyId, role: UserRole.ADMIN },
     });
   }
+
+  // src/notification/notification.service.ts
+  async createChannelMessageNotification(
+    userId: number,
+    channelId: number,
+    title: string,
+    message: string,
+    link: string,
+  ) {
+    // 🔎 Check if an unread notification for this channel already exists
+    const existing = await this.repo.findOne({
+      where: { userId, isRead: false, link },
+    });
+
+    if (existing) {
+      // Optional: update timestamp or preview text
+      existing.message = message.slice(0, 200);
+      existing.createdAt = new Date();
+      return this.repo.save(existing);
+    }
+
+    // Otherwise create new
+    const notif = this.repo.create({
+      userId,
+      title,
+      message: message.slice(0, 200),
+      link,
+    });
+    return this.repo.save(notif);
+  }
+
+  async markAsReadByLink(userId: number, link: string) {
+    await this.repo.update({ userId, link, isRead: false }, { isRead: true });
+  }
 }

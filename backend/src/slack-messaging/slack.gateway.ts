@@ -119,13 +119,22 @@ export class SlackGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('slack:setActiveChannel')
-  onSetActive(
+  async onSetActive(
     @MessageBody() data: { channelId: number | null },
     @ConnectedSocket() client: Socket,
   ) {
     const userId = this.socketUser.get(client.id);
     if (!userId) return;
+
     this.userActiveChannel.set(userId, data.channelId ?? null);
+
+    if (data.channelId) {
+      // 🧹 Mark all notifications for this channel as read
+      await this.notificationService.markAsReadByLink(
+        userId,
+        `/slack-messaging`,
+      );
+    }
   }
 
   @SubscribeMessage('slack:typing')
@@ -174,32 +183,33 @@ export class SlackGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const memberIds = await this.slackService.getChannelMemberIds(
       data.channelId,
     );
+
     for (const memberId of memberIds) {
       if (memberId === userId) continue;
+
       const active = this.userActiveChannel.get(memberId) ?? null;
+
       if (active !== data.channelId) {
-        // create persistent Notification
         try {
-          const notif = await this.notificationService.create({
-            userId: memberId,
-            title: `New message in ${message.channel?.name ?? 'channel'}`,
-            message: message.content.slice(0, 200),
-            link: `/slack-messaging`,
-          });
-          // emit socket notification if user online
+          const notif =
+            await this.notificationService.createChannelMessageNotification(
+              memberId,
+              data.channelId,
+              `New message in ${message.channel?.name ?? 'channel'}`,
+              message.content,
+              `/slack-messaging?channelId=${data.channelId}`,
+            );
+
+          // Real-time socket events
           if (this.userSockets.has(memberId)) {
-            this.server.to(`user:${memberId}`).emit('slack:notification', {
-              notification: notif,
-              channelId: data.channelId,
-            });
+            this.notificationGateway.sendToUser(memberId, notif);
             this.server.to(`user:${memberId}`).emit('slack:unreadIndicator', {
               channelId: data.channelId,
               unread: true,
             });
           }
         } catch (err) {
-          // swallow individual notif errors to keep messaging flow
-          this.logger.error('Failed to create notification', err);
+          this.logger.error('Failed to create or update notification', err);
         }
       }
     }

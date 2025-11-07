@@ -17,10 +17,12 @@ import { userService, type User } from "../services/userService";
 import type { Channel, Message } from "../types/slack";
 import { connectSocket, getSocket } from "../services/socketService";
 import slackService from "../services/slackService";
+import { useAppActivity } from "../context/useAppActivity";
 
 export default function SlackMessagingPage() {
   const storedUser = localStorage.getItem("user") ?? "{}";
   const currentUser: User = JSON.parse(storedUser);
+  const { setInSlackPage } = useAppActivity();
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [dmChannels, setDmChannels] = useState<Channel[]>([]);
@@ -41,6 +43,11 @@ export default function SlackMessagingPage() {
 
   const socketReady = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setInSlackPage(true);
+    return () => setInSlackPage(false);
+  }, [setInSlackPage]);
 
   // connect socket
   useEffect(() => {
@@ -83,15 +90,44 @@ export default function SlackMessagingPage() {
       }
     };
 
+    // ✅ Also listen for backend unreadIndicator event
+    const onUnreadIndicator = (data: {
+      channelId: number;
+      unread: boolean;
+    }) => {
+      setUnreads((u) => ({ ...u, [data.channelId]: data.unread }));
+    };
+
     socket.on("slack:message", onMessage);
+    socket.on("slack:unreadIndicator", onUnreadIndicator);
+
     return () => {
       socket.off("slack:message", onMessage);
+      socket.off("slack:unreadIndicator", onUnreadIndicator);
     };
   }, [selectedChannel]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (!socketReady.current) return;
+    const socket = getSocket();
+
+    if (selectedChannel) {
+      // When user opens a channel, tell backend this is active
+      socket.emit("slack:setActiveChannel", { channelId: selectedChannel.id });
+    } else {
+      // When no channel is open (user navigated away)
+      socket.emit("slack:setActiveChannel", { channelId: null });
+    }
+
+    // Clean up on unmount or channel change
+    return () => {
+      socket.emit("slack:setActiveChannel", { channelId: null });
+    };
+  }, [selectedChannel]);
 
   // open a channel
   const openChannel = async (channel: Channel) => {
