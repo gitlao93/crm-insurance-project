@@ -104,7 +104,7 @@ export const DashboardMenu: DashboardMenuProps[] = [
   },
   {
     id: uuid(),
-    title: "Setting",
+    title: "Agency Information",
     icon: "settings",
     link: "/setting",
     roles: ["admin"],

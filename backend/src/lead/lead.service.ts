@@ -26,36 +26,35 @@ export class LeadService {
       console.log('Fetching all leads without user filter');
       return this.leadRepository.find({
         relations: ['agent', 'policyPlan', 'interactions'],
+        order: { createdAt: 'DESC' }, // 👈 newest first
       });
     }
 
-    // 🔍 Load user and their subordinates if supervisor
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['subordinates'], // include subordinate agents
+      relations: ['subordinates'],
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // 🧑‍💼 Agent → fetch own leads
     if (user.role === UserRole.AGENT) {
       return this.leadRepository.find({
         where: { agentId: userId },
         relations: ['agent', 'policyPlan', 'interactions'],
+        order: { createdAt: 'DESC' },
       });
     }
 
-    // 🧑‍💼 Admin → fetch leads in same agency
     if (user.role === UserRole.ADMIN) {
       return this.leadRepository.find({
         where: { agencyId: user.agencyId },
         relations: ['agent', 'policyPlan', 'interactions'],
+        order: { createdAt: 'DESC' },
       });
     }
 
-    // 👩‍💼 Collection Supervisor → fetch leads from their agents
     if (user.role === UserRole.COLLECTION_SUPERVISOR) {
       const subordinateIds =
         user.subordinates
@@ -70,12 +69,14 @@ export class LeadService {
       return this.leadRepository.find({
         where: { agentId: In(subordinateIds) },
         relations: ['agent', 'policyPlan', 'interactions'],
+        order: { createdAt: 'DESC' },
       });
     }
 
-    // 👑 Super Admin or fallback → return all leads
+    // 👑 Super Admin or fallback
     return this.leadRepository.find({
       relations: ['agent', 'policyPlan', 'interactions'],
+      order: { createdAt: 'DESC' },
     });
   }
 

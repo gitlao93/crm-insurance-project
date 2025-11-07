@@ -530,10 +530,17 @@ export default function GoodlifeDamayanPage() {
                           </Form.Label>
                           <Form.Control
                             type="tel"
-                            placeholder="+63 XXX XXX XXXX"
+                            placeholder="09XXXXXXXXX"
                             size="lg"
                             value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            maxLength={11} // ✅ prevents more than 11 characters
+                            onChange={(e) => {
+                              // ✅ allow only digits, and limit to 11
+                              const input = e.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, 11);
+                              setPhoneNumber(input);
+                            }}
                           />
                         </Form.Group>
                       </Col>
