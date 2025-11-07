@@ -119,6 +119,14 @@ export default function ClaimRequest() {
       selector: (row) => row.description ?? "",
     },
     {
+      name: "Claim Type",
+      selector: (row) => {
+        const types = Object.keys(row.claimType ?? {});
+        return types.length ? types.join(", ") : "-";
+      },
+      sortable: true,
+    },
+    {
       name: "Date Filed",
       selector: (row) =>
         row.dateFiled

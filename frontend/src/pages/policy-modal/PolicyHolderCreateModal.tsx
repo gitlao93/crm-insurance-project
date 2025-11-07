@@ -351,6 +351,7 @@ export default function PolicyHolderCreateModal({
             <Form.Control
               type="text"
               value={formData.phoneNumber}
+              maxLength={11}
               onChange={handleChange("phoneNumber")}
               isInvalid={!!errors.phoneNumber}
             />

@@ -7,8 +7,10 @@ import {
   type Notification,
 } from "../../../services/notificationService";
 import { connectSocket } from "../../../services/socketService";
+import { useAppActivity } from "../../../context/useAppActivity";
 
 export const DesktopNotifications: React.FC = () => {
+  const { inSlackPage } = useAppActivity();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -51,20 +53,25 @@ export const DesktopNotifications: React.FC = () => {
     if (!userId) return;
     const socket = connectSocket();
 
-    // Join personal user room
     socket.emit("joinUser", { userId });
 
     socket.on("newNotification", (notif: Notification) => {
-      console.log("🆕 New notification received:", notif);
+      console.log("🆕 New notification:", notif);
+
+      if (inSlackPage) {
+        // Don't show desktop bell updates; let SlackMessaging handle badge
+        return;
+      }
+
+      // Otherwise update notification list and badge
       setNotifications((prev) => [notif, ...prev]);
       setUnreadCount((prev) => prev + 1);
     });
 
     return () => {
       socket.off("newNotification");
-      socket.emit("leaveUserRoom", { userId });
     };
-  }, [userId]);
+  }, [userId, inSlackPage]);
 
   /** 🧹 Mark notification as read (on click) */
   const handleNotificationClick = async (id: number, link?: string) => {
@@ -135,7 +142,7 @@ export const DesktopNotifications: React.FC = () => {
 
             <div className="border-top px-3 pt-3 pb-3">
               <Link
-                to="/dashboard/notification-history"
+                to="/notification-history"
                 className="text-link fw-semi-bold"
               >
                 See all Notifications

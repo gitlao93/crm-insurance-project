@@ -15,7 +15,7 @@ import {
   type Agency,
   type UpdateAgencyRequest,
 } from "../services/agencyService";
-import { quotaService } from "../services/quotaService";
+// import { quotaService } from "../services/quotaService";
 
 export default function AgencySetting() {
   const storedUser = localStorage.getItem("user");
@@ -29,50 +29,50 @@ export default function AgencySetting() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isChanged, setIsChanged] = useState(false);
 
-  const [quotaMonth, setQuotaMonth] = useState("");
-  const [targetPolicies, setTargetPolicies] = useState<number>(0);
-  const [quotaMessage, setQuotaMessage] = useState<string | null>(null);
-  const [quotaError, setQuotaError] = useState<string | null>(null);
-  const [quotaSaving, setQuotaSaving] = useState(false);
+  // const [quotaMonth, setQuotaMonth] = useState("");
+  // const [targetPolicies, setTargetPolicies] = useState<number>(0);
+  // const [quotaMessage, setQuotaMessage] = useState<string | null>(null);
+  // const [quotaError, setQuotaError] = useState<string | null>(null);
+  // const [quotaSaving, setQuotaSaving] = useState(false);
 
   const agencyId = user?.agencyId;
 
-  const handleCreateQuota = async () => {
-    if (!quotaMonth || !targetPolicies || !user?.id) {
-      setQuotaError("Please fill all fields.");
-      return;
-    }
+  // const handleCreateQuota = async () => {
+  //   if (!quotaMonth || !targetPolicies || !user?.id) {
+  //     setQuotaError("Please fill all fields.");
+  //     return;
+  //   }
 
-    try {
-      setQuotaSaving(true);
-      setQuotaError(null);
-      setQuotaMessage(null);
+  //   try {
+  //     setQuotaSaving(true);
+  //     setQuotaError(null);
+  //     setQuotaMessage(null);
 
-      // Split the selected month input "2025-10" into year and month
-      const [year, month] = quotaMonth.split("-");
+  //     // Split the selected month input "2025-10" into year and month
+  //     const [year, month] = quotaMonth.split("-");
 
-      await quotaService.create({
-        year: Number(year),
-        month,
-        targetPolicies,
-        adminId: user.id, // ✅ send adminId from frontend
-      });
+  //     await quotaService.create({
+  //       year: Number(year),
+  //       month,
+  //       targetPolicies,
+  //       adminId: user.id, // ✅ send adminId from frontend
+  //     });
 
-      setQuotaMessage("Quota created successfully!");
-      setQuotaMonth("");
-      setTargetPolicies(0);
-    } catch (err) {
-      const errorMsg =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any)?.response?.data?.message ||
-        (err as any)?.message ||
-        "Failed to create quota.";
-      console.log("Failed to create quota:", errorMsg);
-      setQuotaError(errorMsg);
-    } finally {
-      setQuotaSaving(false);
-    }
-  };
+  //     setQuotaMessage("Quota created successfully!");
+  //     setQuotaMonth("");
+  //     setTargetPolicies(0);
+  //   } catch (err) {
+  //     const errorMsg =
+  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //       (err as any)?.response?.data?.message ||
+  //       (err as any)?.message ||
+  //       "Failed to create quota.";
+  //     console.log("Failed to create quota:", errorMsg);
+  //     setQuotaError(errorMsg);
+  //   } finally {
+  //     setQuotaSaving(false);
+  //   }
+  // };
 
   // ✅ Fetch Agency details
   useEffect(() => {
@@ -94,7 +94,7 @@ export default function AgencySetting() {
           postalCode: data.postalCode,
           email: data.email,
           phoneNumber: data.phoneNumber,
-          landLine: data.landLine,
+          // landLine: data.landLine,
         });
       } catch (err) {
         console.log("Failed to load agency:", err);
@@ -189,14 +189,14 @@ export default function AgencySetting() {
                 />
               </Form.Group>
 
-              <Form.Group className="mb-3">
+              {/* <Form.Group className="mb-3">
                 <Form.Label>Landline</Form.Label>
                 <Form.Control
                   type="text"
                   value={formData.landLine || ""}
                   onChange={handleChange("landLine")}
                 />
-              </Form.Group>
+              </Form.Group> */}
 
               <Form.Group className="mb-3">
                 <Form.Label>Street</Form.Label>
@@ -243,7 +243,7 @@ export default function AgencySetting() {
           </Col>
 
           {/* 🔹 Quota Creation Form */}
-          <Col md={6}>
+          {/* <Col md={6}>
             <Form className="border rounded p-3 shadow-sm bg-light">
               <h5 className="mb-3">🎯 Monthly Quota</h5>
 
@@ -284,7 +284,7 @@ export default function AgencySetting() {
                 )}
               </Button>
             </Form>
-          </Col>
+          </Col> */}
         </Row>
       ) : (
         <Alert variant="warning">No agency details found.</Alert>

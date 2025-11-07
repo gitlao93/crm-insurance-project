@@ -34,14 +34,6 @@ export class User {
   @Column({ type: 'varchar', length: 255 })
   password: string;
 
-  // @BeforeInsert()
-  // async setDefaultPassword() {
-  //   if (!this.password) {
-  //     this.password = 'password123';
-  //   }
-  //   this.password = await bcrypt.hash(this.password, 10);
-  // }
-
   @Column({ type: 'varchar', length: 20 })
   phoneNumber: string;
 

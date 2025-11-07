@@ -200,6 +200,7 @@ export class PolicyHolderService {
           'soa',
           'soa.billings',
         ],
+        order: { createdAt: 'DESC' },
       });
     }
 
@@ -223,6 +224,7 @@ export class PolicyHolderService {
           'soa',
           'soa.billings',
         ],
+        order: { createdAt: 'DESC' },
       });
     }
 
@@ -237,6 +239,7 @@ export class PolicyHolderService {
           'soa',
           'soa.billings',
         ],
+        order: { createdAt: 'DESC' },
       });
     }
 
@@ -260,6 +263,7 @@ export class PolicyHolderService {
           'soa',
           'soa.billings',
         ],
+        order: { createdAt: 'DESC' },
       });
     }
 
@@ -272,6 +276,7 @@ export class PolicyHolderService {
         'soa',
         'soa.billings',
       ],
+      order: { createdAt: 'DESC' },
     });
   }
 

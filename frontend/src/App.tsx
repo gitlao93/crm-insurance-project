@@ -14,117 +14,154 @@ import PolicyHolderSoa from "./pages/PolicyHolderSoa";
 import Commission from "./pages/Commission";
 import Home from "./pages/Home";
 import ClaimRequest from "./pages/ClaimRequest";
-import MessagesPage from "./pages/Messages";
+// import MessagesPage from "./pages/Messages";
+import SlackMessagingPage from "./pages/SlackMessagingPage";
+import { AppActivityProvider } from "./context/AppActivityProvider";
+import ForbiddenPage from "./pages/ForbiddenPage";
+import Quota from "./pages/Quota";
+import NotificationHistory from "./pages/NotificationHistory";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/Home" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/" element={<RootLayout />}>
-          <Route
-            path="dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="user"
-            element={
-              <PrivateRoute>
-                <User />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="claim-request"
-            element={
-              <PrivateRoute>
-                <ClaimRequest />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="policy-category"
-            element={
-              <PrivateRoute>
-                <PolicyCategory />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="policy-catalog"
-            element={
-              <PrivateRoute>
-                <PolicyPlan />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="policy-holder"
-            element={
-              <PrivateRoute>
-                <PolicyHolder />
-              </PrivateRoute>
-            }
-          />
+    <AppActivityProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/Home" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<RootLayout />}>
+            <Route
+              path="dashboard"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="user"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <User />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="claim-request"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <ClaimRequest />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="policy-category"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <PolicyCategory />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="policy-catalog"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <PolicyPlan />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="policy-holder"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <PolicyHolder />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="notification-history"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <NotificationHistory />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="policy-holder-soa"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <PolicyHolderSoa />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="policy-holder-soa"
-            element={
-              <PrivateRoute>
-                <PolicyHolderSoa />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="commission"
+              element={
+                <PrivateRoute allowedRoles={["agent"]}>
+                  <Commission />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="message"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <Message />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="commission"
-            element={
-              <PrivateRoute>
-                <Commission />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="message"
-            element={
-              <PrivateRoute>
-                <Message />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="quota"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <Quota />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="messages"
-            element={
-              <PrivateRoute>
-                <MessagesPage />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="lead"
-            element={
-              <PrivateRoute>
-                <Lead />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="setting"
-            element={
-              <PrivateRoute>
-                <AgencySetting />
-              </PrivateRoute>
-            }
-          />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+            <Route
+              path="slack-messaging"
+              element={
+                <PrivateRoute
+                  allowedRoles={["admin", "collection_supervisor", "agent"]}
+                >
+                  <SlackMessagingPage />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="lead"
+              element={
+                <PrivateRoute allowedRoles={["admin", "agent"]}>
+                  <Lead />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="setting"
+              element={
+                <PrivateRoute allowedRoles={["admin"]}>
+                  <AgencySetting />
+                </PrivateRoute>
+              }
+            />
+          </Route>
+
+          <Route path="/403" element={<ForbiddenPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AppActivityProvider>
   );
 }
 
