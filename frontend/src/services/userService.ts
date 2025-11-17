@@ -51,6 +51,11 @@ export interface UserUpdateRequest {
   isActive: boolean;
   agencyId: number;
   supervisorId?: number | null;
+} 
+
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
 }
 
 export const userService = {
@@ -90,6 +95,10 @@ export const userService = {
   async activateUser(id: number): Promise<User> {
     const response = await api.patch(`/users/activate/${id}`);
     return response.data;
+  }, 
+
+  async changePassword(id: number, data: ChangePasswordRequest): Promise<void> {
+    await api.patch(`/users/${id}/change-password`, data);
   },
 
   async isEmailTaken(email: string): Promise<boolean> {

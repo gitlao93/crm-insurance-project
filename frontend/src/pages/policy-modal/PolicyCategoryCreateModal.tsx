@@ -42,13 +42,28 @@ export default function PolicyCategoryCreateModal({
 
       await policyCategoryService.createCategory(formData);
       onSuccess();
+      setFormData({
+        categoryName: "",
+        description: "",
+        agencyId: userObj.agencyId,
+      }); 
       onClose();
     } catch (err) {
       console.error("Failed to create user", err);
     }
   };
+
+  const cancelHandler = () => {
+    setFormData({
+      categoryName: "",
+      description: "",
+      agencyId: userObj.agencyId,
+      }
+    );
+    onClose();
+  }
   return (
-    <Modal show={show} onHide={onClose} centered>
+    <Modal show={show} onHide={cancelHandler} centered>
       <Modal.Header closeButton>
         <Modal.Title>Add Lead</Modal.Title>
       </Modal.Header>
@@ -75,7 +90,7 @@ export default function PolicyCategoryCreateModal({
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={cancelHandler}>
           Cancel
         </Button>
         <Button variant="primary" onClick={handleSubmit}>

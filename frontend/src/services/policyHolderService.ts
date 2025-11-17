@@ -54,7 +54,7 @@ export interface SOA {
   billings: Billing[];
   createdAt?: string;
   updatedAt?: string;
-}
+} 
 
 // Optional enum for status (you can adjust based on your backend schema)
 export enum PolicyHolderStatus {
@@ -71,6 +71,7 @@ export interface PolicyHolder {
   firstName: string;
   lastName: string;
   phoneNumber?: string;
+  occupation?: string;
   email?: string;
   policyPlanId: number;
   agentId?: number;
@@ -94,6 +95,7 @@ export interface CreatePolicyHolderRequest {
   firstName: string;
   lastName: string;
   phoneNumber: string;
+  occupation: string;
   email: string;
   policyPlanId: number;
   agentId: number;

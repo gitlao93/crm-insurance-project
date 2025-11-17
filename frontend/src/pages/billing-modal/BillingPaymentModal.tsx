@@ -19,7 +19,7 @@ export default function BillingPaymentModal({
   const unpaidBillings = billings.filter((b) => Number(b.amountPaid) === 0);
 
   const [selectedBillingId, setSelectedBillingId] = useState<number | null>(
-    unpaidBillings[0]?.id ?? null
+    null
   );
   const [paymentAmount, setPaymentAmount] = useState("");
   const [receiptNumber, setReceiptNumber] = useState("");
@@ -30,7 +30,7 @@ export default function BillingPaymentModal({
   useEffect(() => {
     if (show) {
       const unpaid = billings.filter((b) => Number(b.amountPaid) === 0);
-      setSelectedBillingId(unpaid[0]?.id ?? null);
+      setSelectedBillingId( null);
       setPaymentAmount("");
       setReceiptNumber("");
       setError(null);
@@ -70,6 +70,17 @@ export default function BillingPaymentModal({
     }
   };
 
+  const handleBillingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedBillingId(Number(e.target.value));
+
+    const billing = unpaidBillings.find((b) => b.id === Number(e.target.value));
+    if (billing) {
+      setPaymentAmount(billing.amount.toString());
+    }
+  };
+
+
+
   return (
     <Modal show={show} onHide={onClose} centered>
       <Modal.Header closeButton>
@@ -85,8 +96,9 @@ export default function BillingPaymentModal({
               <Form.Label>Select Billing (Due Date)</Form.Label>
               <Form.Select
                 value={selectedBillingId ?? ""}
-                onChange={(e) => setSelectedBillingId(Number(e.target.value))}
+                onChange={ handleBillingChange}
               >
+                <option value=""> -- Select Billing --</option>
                 {unpaidBillings.map((b) => (
                   <option key={b.id} value={b.id}>
                     {new Date(b.dueDate).toLocaleDateString()} — ₱
@@ -96,7 +108,7 @@ export default function BillingPaymentModal({
               </Form.Select>
             </Form.Group>
 
-            <Form.Group className="mb-3">
+            {/* <Form.Group className="mb-3">
               <Form.Label>Enter Payment Amount</Form.Label>
               <Form.Control
                 type="number"
@@ -105,7 +117,7 @@ export default function BillingPaymentModal({
                 placeholder="Enter exact payment amount"
                 min="0"
               />
-            </Form.Group>
+            </Form.Group> */}
 
             <Form.Group>
               <Form.Label>Receipt Number</Form.Label>

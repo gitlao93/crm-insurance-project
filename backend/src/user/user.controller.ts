@@ -66,6 +66,18 @@ export class UserController {
     return { message: `User with id ${id} has been Deactivated` };
   }
 
+  @Patch(':id/change-password')
+  changePassword(
+    @Param('id') id: number,
+    @Body() dto: { oldPassword: string; newPassword: string },
+  ) {
+    return this.userService.changePassword(
+      id,
+      dto.oldPassword,
+      dto.newPassword,
+    );
+  }
+
   // ✅ Activate user
   @Patch('activate/:id')
   async activate(@Param('id', ParseIntPipe) id: number) {

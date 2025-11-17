@@ -36,12 +36,12 @@ export default function UpdatePolicyHolderModal({
     lastName: "",
     email: "",
     phoneNumber: "",
+    occupation: "",
     agencyId: userObj.agencyId,
     agentId: userObj.id,
     policyPlanId: 0,
     StartDate: "",
     EndDate: "",
-    dueDate: "",
     status: PolicyHolderStatus.ACTIVE,
     leadId: null,
   });
@@ -74,14 +74,13 @@ export default function UpdatePolicyHolderModal({
         lastName: policyHolder.lastName ?? "",
         email: policyHolder.email ?? "",
         phoneNumber: policyHolder.phoneNumber ?? "",
+        occupation: policyHolder.occupation ?? "",
         agencyId: policyHolder.agencyId ?? userObj.agencyId,
         agentId: policyHolder.agentId ?? userObj.id,
         policyPlanId: policyHolder.policyPlanId ?? 0,
         StartDate: policyHolder.StartDate
           ? policyHolder.StartDate.split("T")[0]
           : "",
-        EndDate: policyHolder.EndDate ? policyHolder.EndDate.split("T")[0] : "",
-        dueDate: policyHolder.dueDate ? policyHolder.dueDate.split("T")[0] : "",
         status: policyHolder.status ?? PolicyHolderStatus.ACTIVE,
         leadId: policyHolder.leadId ?? null,
       });
@@ -93,12 +92,12 @@ export default function UpdatePolicyHolderModal({
         lastName: "",
         email: "",
         phoneNumber: "",
+        occupation: "",
         agencyId: userObj.agencyId,
         agentId: userObj.id,
         policyPlanId: 0,
         StartDate: "",
         EndDate: "",
-        dueDate: "",
         status: PolicyHolderStatus.ACTIVE,
         leadId: null,
       });
@@ -149,11 +148,7 @@ export default function UpdatePolicyHolderModal({
         if (!/^0\d{10}$/.test(value))
           return "Phone number must be 11 digits and start with 0";
         break;
-      case "StartDate":
-      case "EndDate":
-      case "dueDate":
-        if (!value) return "This field is required";
-        break;
+      
       default:
         return "";
     }
@@ -175,20 +170,10 @@ export default function UpdatePolicyHolderModal({
       }
 
       setLoading(true);
-      const payload: CreatePolicyHolderRequest = {
-        ...formData,
-        StartDate: formData.StartDate
-          ? new Date(formData.StartDate).toISOString()
-          : formData.StartDate,
-        EndDate: formData.EndDate
-          ? new Date(formData.EndDate).toISOString()
-          : formData.EndDate,
-        dueDate: formData.dueDate
-          ? new Date(formData.dueDate).toISOString()
-          : formData.dueDate,
-      };
+   
+      
 
-      await policyHolderService.update(policyHolder.id, payload);
+      await policyHolderService.update(policyHolder.id, formData);
       onSuccess();
       handleClose();
     } catch (err) {
@@ -204,12 +189,10 @@ export default function UpdatePolicyHolderModal({
       lastName: "",
       email: "",
       phoneNumber: "",
+      occupation: "",
       agencyId: userObj.agencyId,
       agentId: userObj.id,
       policyPlanId: 0,
-      StartDate: "",
-      EndDate: "",
-      dueDate: "",
       status: PolicyHolderStatus.ACTIVE,
       leadId: null,
     });
@@ -291,35 +274,16 @@ export default function UpdatePolicyHolderModal({
             </Form.Control.Feedback>
           </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Start Date</Form.Label>
+            <Form.Group className="mb-3">
+            <Form.Label>Occupation</Form.Label>
             <Form.Control
-              type="date"
-              value={formData.StartDate ?? ""}
-              onChange={handleChange("StartDate")}
-              isInvalid={!!errors.StartDate}
+              type="text"
+              value={formData.occupation}
+              onChange={handleChange("occupation")}
             />
           </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>End Date</Form.Label>
-            <Form.Control
-              type="date"
-              value={formData.EndDate ?? ""}
-              onChange={handleChange("EndDate")}
-              isInvalid={!!errors.EndDate}
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Due Date</Form.Label>
-            <Form.Control
-              type="date"
-              value={formData.dueDate ?? ""}
-              onChange={handleChange("dueDate")}
-              isInvalid={!!errors.dueDate}
-            />
-          </Form.Group>
+          
+          
 
           <Form.Group className="mb-3">
             <Form.Label>Status</Form.Label>

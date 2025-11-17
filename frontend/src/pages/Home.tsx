@@ -15,6 +15,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   policyHolderService,
+  PolicyHolderStatus,
   type PolicyHolder,
 } from "../services/policyHolderService";
 import {
@@ -62,6 +63,11 @@ export default function GoodlifeDamayanPage() {
       try {
         const data = await policyHolderService.findPolicyHolder(policyNumber);
         console.log("policy holder: ", data);
+        if (data.status === PolicyHolderStatus.CANCELLED) {
+          setError("This policy is CANCELLED please visit the office.");
+          return;
+        }
+
         setPolicyHolder(data);
         setError(null);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
@@ -92,6 +98,11 @@ export default function GoodlifeDamayanPage() {
 
     if (!policyHolder) {
       setError("Please enter a valid policy number.");
+      return;
+    }
+
+    if (policyHolder.status === PolicyHolderStatus.CANCELLED) {
+      setError("Claims can only be filed on ACTIVE policies.");
       return;
     }
 

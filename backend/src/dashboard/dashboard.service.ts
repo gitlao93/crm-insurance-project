@@ -94,32 +94,29 @@ export class DashboardService {
   }
 
   /** 🔹 Top Performing Agents */
+
   async getTopAgents() {
-    interface TopAgentRow {
-      agent_firstName: string;
-      agent_lastName: string;
-      totalPolicies: string;
-    }
+  const data = await this.policyHolderRepo
+    .createQueryBuilder('holder')
+    .leftJoin('holder.agent', 'agent')
+    .select([
+      'agent.firstName AS agent_firstName',
+      'agent.lastName AS agent_lastName',
+    ])
+    .addSelect('COUNT(holder.id)', 'totalPolicies')
+    .groupBy('agent.id')
+    .addGroupBy('agent.firstName')
+    .addGroupBy('agent.lastName')
+    .orderBy('totalPolicies', 'DESC')
+    .limit(5)
+    .getRawMany();
 
-    const data = await this.policyHolderRepo
-      .createQueryBuilder('holder')
-      .leftJoin('holder.agent', 'agent')
-      .select([
-        'agent.firstName AS agent_firstName',
-        'agent.lastName AS agent_lastName',
-      ])
-      .addSelect('COUNT(holder.id)', 'totalPolicies')
-      .groupBy('agent.id')
-      .orderBy('totalPolicies', 'DESC')
-      .limit(5)
-      .getRawMany<TopAgentRow>();
-
-    return data.map((agent) => ({
-      name: `${agent.agent_firstName} ${agent.agent_lastName}`,
-      totalPolicies: Number(agent.totalPolicies),
-    }));
-  }
-
+  return data.map((agent) => ({
+    name: `${agent.agent_firstName} ${agent.agent_lastName}`,
+    totalPolicies: Number(agent.totalPolicies),
+  }));
+}
+  
   /** 🔹 Lead Conversion Rate */
   async getLeadConversion() {
     const total = await this.leadRepo.count();

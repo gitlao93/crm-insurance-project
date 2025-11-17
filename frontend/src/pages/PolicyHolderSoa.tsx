@@ -70,6 +70,10 @@ export default function PolicyHolderSoa() {
               <p>
                 <strong>Phone:</strong> {holder.phoneNumber}
               </p>
+                <p>
+                <strong>Occupation:</strong> {holder.occupation}
+              </p>
+              
             </Col>
             <Col md={6}>
               <p>
@@ -81,6 +85,7 @@ export default function PolicyHolderSoa() {
               <p>
                 <strong>Duration:</strong> {holder.policyPlan?.duration} year(s)
               </p>
+
             </Col>
           </Row>
         </Card.Body>
@@ -136,6 +141,7 @@ export default function PolicyHolderSoa() {
                   <th>#</th>
                   <th>Amount</th>
                   <th>Due Date</th>
+                  <th>Or Number</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -145,6 +151,7 @@ export default function PolicyHolderSoa() {
                     <td>{b.installmentNumber}</td>
                     <td>₱{Number(b.amount).toLocaleString()}</td>
                     <td>{new Date(b.dueDate).toLocaleDateString()}</td>
+                    <td>{b.receiptNumber || "-"}</td>
                     <td>{b.status}</td>
                   </tr>
                 ))}

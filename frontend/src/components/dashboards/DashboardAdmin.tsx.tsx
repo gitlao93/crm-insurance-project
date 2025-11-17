@@ -255,7 +255,7 @@ export default function DashboardAdmin({ data }: DashboardAdminProps) {
 
         <Col md={4} className="mb-4">
           <Card className="shadow-sm p-3">
-            <Card.Title>🎯 Lead Conversion Rate</Card.Title>
+            <Card.Title>🎯 Lead Status </Card.Title>
             <div style={{ width: "250px", height: "250px", margin: "0 auto" }}>
               <Pie data={leadData} options={pieOptions} />
             </div>

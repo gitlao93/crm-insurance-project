@@ -35,6 +35,10 @@ export class CreatePolicyHolderDto {
   })
   phoneNumber: string;
 
+  
+  @IsString()
+  occupation: string;
+
   @IsEnum(PolicyHolderStatus)
   status: PolicyHolderStatus;
 

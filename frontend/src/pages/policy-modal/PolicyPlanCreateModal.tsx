@@ -24,7 +24,7 @@ export default function PolicyPlanCreateModal({
 }: PolicyPlanCreateModalProps) {
   const [formData, setFormData] = useState<CreatePolicyPlanRequest>({
     policyName: "",
-    policyType: PolicyType.LIFE,
+    policyType: PolicyType.BURIAL,
     term: PolicyTerm.MONTHLY,
     duration: 1,
     commission_rate: 0,
@@ -154,7 +154,7 @@ export default function PolicyPlanCreateModal({
           </Form.Group>
 
           {/* POLICY TYPE */}
-          <Form.Group className="mb-3">
+          {/* <Form.Group className="mb-3">
             <Form.Label>Policy Type</Form.Label>
             <Form.Select
               name="policyType"
@@ -164,7 +164,7 @@ export default function PolicyPlanCreateModal({
               <option value={PolicyType.LIFE}>{PolicyType.LIFE}</option>
               <option value={PolicyType.BURIAL}>{PolicyType.BURIAL}</option>
             </Form.Select>
-          </Form.Group>
+          </Form.Group> */}
 
           {/* TERM */}
           <Form.Group className="mb-3">

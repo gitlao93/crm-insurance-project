@@ -42,6 +42,9 @@ export class PolicyHolder {
   @Column({ type: 'varchar', nullable: true })
   phoneNumber: string;
 
+   @Column({ type: 'varchar', nullable: true })
+ occupation: string;
+
   @Column({
     type: 'enum',
     enum: PolicyHolderStatus,

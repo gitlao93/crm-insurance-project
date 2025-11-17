@@ -68,6 +68,18 @@ export default function UserCreateModal({
 
       await userService.createUser(payload);
       onSuccess();
+      setFormData({
+        firstName: "",
+        lastName: "",   
+        email: "",
+        password: "",
+        phoneNumber: "",
+        landlineNumber: null,
+        officeHours: "8:00am to 5:00pm",
+        role: UserRole.AGENT,
+        agencyId: userObj.agencyId,
+        supervisorId: null,
+      });
       onClose();
     } catch (err) {
       console.error("Failed to create user", err);
@@ -136,9 +148,25 @@ export default function UserCreateModal({
 
   useEffect(() => {
     fetchSupervisors();
-  }, [fetchSupervisors]);
+  }, [fetchSupervisors, show]); 
+
+  const cancelHandler = () => {
+    setFormData({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      landlineNumber: null,
+      officeHours: "8:00am to 5:00pm",
+      role: UserRole.AGENT,
+      agencyId: userObj.agencyId,
+      supervisorId: null,
+    });
+    onClose();
+  }
   return (
-    <Modal show={show} onHide={onClose} centered>
+    <Modal show={show} onHide={cancelHandler} centered>
       <Modal.Header closeButton>
         <Modal.Title>Create User</Modal.Title>
       </Modal.Header>
@@ -271,7 +299,7 @@ export default function UserCreateModal({
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="secondary" onClick={cancelHandler}>
           Cancel
         </Button>
         <Button variant="primary" onClick={handleSubmit}>

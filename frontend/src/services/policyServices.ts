@@ -2,10 +2,9 @@ import api from "./api";
 
 // ========== Types ==========
 export enum ClaimType {
-  DEATH = "Death",
-  BURIAL = "BURIAL",
-  ACCIDENT = "Accident",
-  HOSPITALIZATION = "Hospitalization",
+  DEATH = " Natural Death",
+  BURIAL = "Burial",
+  ACCIDENT = "Accidental Death",
 }
 export enum PolicyStatus {
   ACTIVE = "Active",

@@ -183,6 +183,30 @@ export class UserService {
     await this.userRepo.save(user);
   }
 
+  async changePassword(
+    id: number,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.userRepo.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    // Hash new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashed;
+    await this.userRepo.save(user);
+  }
+
   async activate(id: number): Promise<void> {
     const user = await this.userRepo.findOne({ where: { id } });
 
@@ -193,3 +217,4 @@ export class UserService {
     await this.userRepo.save(user);
   }
 }
+

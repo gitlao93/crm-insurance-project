@@ -19,10 +19,9 @@ export enum PolicyTerm {
 }
 
 export enum ClaimType {
-  DEATH = 'Death',
+  DEATH = 'Natural Death',
   BURIAL = 'Burial',
-  ACCIDENT = 'Accident',
-  HOSPITALIZATION = 'Hospitalization',
+  ACCIDENT = 'Accidental Death',
 }
 
 @Entity('policy_plans')

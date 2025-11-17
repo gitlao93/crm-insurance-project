@@ -8,6 +8,7 @@ import {
 } from "../../../services/notificationService";
 import { connectSocket } from "../../../services/socketService";
 import { useAppActivity } from "../../../context/useAppActivity";
+import ChangePasswordModal from "../../../pages/user-modal/ChangePasswordModal";
 
 export const DesktopNotifications: React.FC = () => {
   const { inSlackPage } = useAppActivity();
@@ -18,6 +19,8 @@ export const DesktopNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
+
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   /** 🧩 Load user info from localStorage */
   useEffect(() => {
@@ -95,6 +98,9 @@ export const DesktopNotifications: React.FC = () => {
   };
 
   return (
+
+    <>
+
     <ListGroup
       as="ul"
       bsPrefix="navbar-nav"
@@ -180,11 +186,23 @@ export const DesktopNotifications: React.FC = () => {
               <div className="dropdown-divider mt-3 mb-2"></div>
             </div>
           </Dropdown.Item>
+                      <Dropdown.Item onClick={() => setShowPasswordModal(true)}>
+              <i className="fe fe-settings me-2"></i>Change password
+            </Dropdown.Item>
           <Dropdown.Item onClick={handleLogout}>
             <i className="fe fe-power me-2"></i>Sign Out
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
-    </ListGroup>
+    </ListGroup> 
+
+     <ChangePasswordModal
+        show={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onSuccess={() => alert("Password changed successfully!")}
+        userId={userId!}
+      />
+
+    </>
   );
 };

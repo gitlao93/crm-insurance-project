@@ -44,6 +44,7 @@ export default function PolicyHolderCreateModal({
     lastName: "",
     email: "",
     phoneNumber: "",
+    occupation: "",
     agencyId: userObj.agencyId,
     agentId: userObj.id,
     policyPlanId: 0,
@@ -360,6 +361,20 @@ export default function PolicyHolderCreateModal({
             </Form.Control.Feedback>
           </Form.Group>
 
+  <Form.Group className="mb-3">
+            <Form.Label>Occupation</Form.Label>
+            <Form.Control
+              type="text"
+              value={formData.occupation}
+              maxLength={11}
+              onChange={handleChange("occupation")}
+            />
+            <Form.Control.Feedback type="invalid">
+              {errors.phoneNumber}
+            </Form.Control.Feedback>
+          </Form.Group>
+
+
           <Row>
             <Col>
               <Form.Group className="mb-3">
@@ -401,8 +416,8 @@ export default function PolicyHolderCreateModal({
               {errors.receiptNumber}
             </Form.Control.Feedback>
           </Form.Group>
-
-          <Form.Group className="mb-3">
+            
+        {/*  <Form.Group className="mb-3">
             <Form.Label>Status</Form.Label>
             <Form.Select
               value={formData.status}
@@ -414,10 +429,10 @@ export default function PolicyHolderCreateModal({
                 </option>
               ))}
             </Form.Select>
-          </Form.Group>
+          </Form.Group> * /}
 
           {/* ✅ Dependents Section (only for Family) */}
-          {selectedPlan?.category?.categoryName === "Family" && (
+        
             <>
               <hr />
               <h6>Dependents</h6>
@@ -468,7 +483,6 @@ export default function PolicyHolderCreateModal({
                 + Add Another Dependent
               </Button>
             </>
-          )}
         </Form>
       </Modal.Body>
 
